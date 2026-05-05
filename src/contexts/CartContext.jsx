@@ -15,7 +15,7 @@ const STORAGE_KEY = "furniqo-cart-v1";
  *   qty: number;
  * }} CartLine */
 
-/** @type {React.Context<{ items: CartLine[]; addItem: (p: Omit<CartLine, "lineId" | "qty"> & { qty?: number }) => void; updateQty: (lineId: string, qty: number) => void; removeLine: (lineId: string) => void; totalQty: number; subtotal: number; openCart: () => void; setCartOpen: (v: boolean) => void; cartOpen: boolean } | null>} */
+/** @type {React.Context<{ items: CartLine[]; addItem: (p: Omit<CartLine, "lineId" | "qty"> & { qty?: number }) => void; updateQty: (lineId: string, qty: number) => void; removeLine: (lineId: string) => void; clearCart: () => void; totalQty: number; subtotal: number; openCart: () => void; setCartOpen: (v: boolean) => void; cartOpen: boolean } | null>} */
 const CartContext = React.createContext(null);
 
 function lineIdFrom(slug, variantKey) {
@@ -113,19 +113,24 @@ export function CartProvider({ children }) {
     [items]
   );
 
+  const clearCart = React.useCallback(() => {
+    setItems([]);
+  }, []);
+
   const value = React.useMemo(
     () => ({
       items,
       addItem,
       updateQty,
       removeLine,
+      clearCart,
       totalQty,
       subtotal,
       openCart,
       setCartOpen,
       cartOpen,
     }),
-    [items, addItem, updateQty, removeLine, totalQty, subtotal, openCart, cartOpen]
+    [items, addItem, updateQty, removeLine, clearCart, totalQty, subtotal, openCart, cartOpen]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

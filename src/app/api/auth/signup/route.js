@@ -5,7 +5,7 @@ import { authRedirectUrl } from "@/utils/site-url";
 
 /**
  * POST /api/auth/signup
- * Body: { fullName, email, password, confirmPassword, terms }
+ * Body: { firstName, lastName, email, password, marketingOptOut? }
  */
 export async function POST(request) {
   try {
@@ -21,7 +21,8 @@ export async function POST(request) {
       );
     }
 
-    const { fullName, email, password } = result.data;
+    const { firstName, lastName, email, password } = result.data;
+    const fullName = `${firstName} ${lastName}`.trim();
 
     // ── 2. Create Supabase client & call signUp ───────────────────────────
     const supabase = await createClient();
@@ -31,8 +32,8 @@ export async function POST(request) {
       password,
       options: {
         data: { full_name: fullName },
-        // After email confirmation Supabase redirects to /auth/callback → dashboard
-        emailRedirectTo: authRedirectUrl("/auth/callback?next=/dashboard", request),
+        // After email confirmation → storefront account area
+        emailRedirectTo: authRedirectUrl("/auth/callback?next=/account/orders", request),
       },
     });
 

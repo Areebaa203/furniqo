@@ -11,14 +11,14 @@ export const FOOTER_SHOP_LINKS = [
 export const FOOTER_INFO_LINKS = [
   { label: "Journal", href: "#" },
   { label: "About", href: "#" },
-  { label: "FAQ", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Contact", href: "/contact" },
   { label: "Login", href: "/login" },
 ];
 
 export const FOOTER_LEGAL_LINKS = [
-  { label: "Privacy policy", href: "#" },
-  { label: "Terms of service", href: "#" },
+  { label: "Privacy policy", href: "/privacy" },
+  { label: "Terms of service", href: "/terms" },
   { label: "Cookies settings", href: "#" },
   { label: "Shipping policy", href: "#" },
   { label: "Start a return", href: "#" },

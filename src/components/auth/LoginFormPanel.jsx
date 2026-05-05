@@ -1,33 +1,31 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { signInSchema } from "@/lib/validations/auth";
-import { createClient } from "@/utils/supabase/client";
-import { authRedirectUrl } from "@/utils/site-url";
 
-const POST_AUTH_PATH = "/dashboard";
+const GREEN = "#1a3021";
+const BORDER = "#d4d0c6";
+
+const POST_AUTH_PATH = "/account/orders";
 
 export default function LoginFormPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState("");
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    const error = searchParams.get("error");
-    if (error) {
-      setServerError(error);
-    }
-  }, [searchParams]);
+  const [formError, setFormError] = useState("");
+  const urlError = searchParams.get("error");
+  const nextParam = searchParams.get("next");
+  const safeNext =
+    typeof nextParam === "string" && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : null;
+  const shownError = urlError || formError;
 
   const {
     register,
@@ -39,7 +37,7 @@ export default function LoginFormPanel() {
   });
 
   const onSubmit = async (data) => {
-    setServerError("");
+    setFormError("");
 
     const res = await fetch("/api/auth/signin", {
       method: "POST",
@@ -50,177 +48,126 @@ export default function LoginFormPanel() {
     const json = await res.json();
 
     if (!json.success) {
-      setServerError(json.message);
+      setFormError(json.message);
       return;
     }
 
-    router.push(POST_AUTH_PATH);
+    router.push(safeNext ?? json.redirectTo ?? POST_AUTH_PATH);
     router.refresh();
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setServerError("");
-      setGoogleLoading(true);
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: authRedirectUrl(
-            `/auth/callback?next=${encodeURIComponent(POST_AUTH_PATH)}`
-          ),
-        },
-      });
-
-      if (error) {
-        setServerError(error.message);
-        setGoogleLoading(false);
-      }
-    } catch (err) {
-      setServerError("Google sign-in failed. Please try again.");
-      setGoogleLoading(false);
-    }
-  };
-
   return (
-    <div className="flex w-full flex-col items-center justify-center bg-white p-8 lg:w-1/2">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center lg:text-left">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back</h1>
-          <p className="mt-2 text-gray-500">Please enter your details to sign in.</p>
-        </div>
+    <div className="flex w-full flex-1 flex-col justify-center bg-[#F9F7F0] px-5 py-10 sm:px-8 sm:py-12 md:w-1/2 md:max-w-none md:px-10 md:py-14 lg:px-12 lg:py-16 xl:px-16">
+      <div className="mx-auto w-full max-w-md">
+        <h1 className="font-home-heading text-[1.875rem] leading-tight tracking-tight text-[#1a3021] sm:text-[2.125rem]">
+          Sign in
+        </h1>
 
-        {serverError && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <Icon icon="mingcute:warning-line" className="shrink-0 text-lg" />
-            {serverError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-70"
+        {shownError ? (
+          <div
+            className="mt-6 flex items-center gap-2 rounded-md border border-red-200 bg-red-50/90 px-3 py-2.5 text-sm text-red-800"
+            role="alert"
           >
-            {googleLoading ? (
-              <>
-                <Icon icon="mingcute:loading-fill" className="animate-spin text-lg" />
-                Redirecting to Google...
-              </>
-            ) : (
-              <>
-                <Icon icon="devicon:google" width="20" />
-                Sign in with Google
-              </>
-            )}
-          </button>
+            <Icon icon="mingcute:warning-line" className="size-5 shrink-0" />
+            {shownError}
+          </div>
+        ) : null}
 
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-100" />
-            </div>
-            <div className="relative bg-white px-4 text-sm text-gray-400">Or sign in with email</div>
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
+          <div className="space-y-1.5">
+            <label htmlFor="login-email" className="sr-only">
+              Email
+            </label>
+            <input
+              id="login-email"
+              {...register("email")}
+              type="email"
+              autoComplete="email"
+              placeholder="Email"
+              className="font-home-body w-full rounded-md border bg-white px-4 py-3.5 text-[15px] text-[#1a3021] outline-none transition placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#1a3021]/20"
+              style={{ borderColor: BORDER }}
+            />
+            {errors.email ? (
+              <p className="text-xs text-red-600">{errors.email.message}</p>
+            ) : null}
           </div>
 
-          <div className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Email Address</label>
-              <div className="relative">
-                <input
-                  {...register("email")}
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-11 text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  <Icon icon="mingcute:mail-line" className="text-lg" />
-                </div>
-              </div>
-              {errors.email && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
-                  <Icon icon="mingcute:alert-circle-line" />
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Password</label>
-              <div className="relative">
-                <input
-                  {...register("password")}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-11 pr-11 text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  <Icon icon="mingcute:lock-line" className="text-lg" />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <Icon
-                    icon={showPassword ? "mingcute:eye-line" : "mingcute:eye-close-line"}
-                    className="text-lg"
-                  />
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
-                  <Icon icon="mingcute:alert-circle-line" />
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="remember" className="cursor-pointer text-sm text-gray-600">
-                  Remember me
-                </label>
-              </div>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          <div className="space-y-1.5">
+            <label htmlFor="login-password" className="sr-only">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="login-password"
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Password"
+                className="font-home-body w-full rounded-md border bg-white py-3.5 pl-4 pr-12 text-[15px] text-[#1a3021] outline-none transition placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#1a3021]/20"
+                style={{ borderColor: BORDER }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-neutral-500 transition hover:text-[#1a3021]"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                Forgot password?
-              </Link>
+                <Icon
+                  icon={showPassword ? "mingcute:eye-line" : "mingcute:eye-close-line"}
+                  className="size-5"
+                />
+              </button>
             </div>
+            {errors.password ? (
+              <p className="text-xs text-red-600">{errors.password.message}</p>
+            ) : null}
+          </div>
 
+          <div className="pt-0.5">
+            <Link
+              href="/forgot-password"
+              className="font-home-body text-sm font-medium text-[#1a3021] underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2 sm:pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+              className="font-home-sub flex min-h-[3rem] w-full items-center justify-center rounded-md py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:opacity-95 disabled:opacity-60 sm:text-xs"
+              style={{ backgroundColor: GREEN }}
             >
               {isSubmitting ? (
-                <>
-                  <Icon icon="mingcute:loading-fill" className="animate-spin text-lg" />
-                  Signing in...
-                </>
+                <span className="inline-flex items-center gap-2">
+                  <Icon icon="mingcute:loading-fill" className="size-5 animate-spin" />
+                  Signing in…
+                </span>
               ) : (
                 "Sign in"
               )}
             </button>
+
+            <Link
+              href="/register"
+              className="font-home-sub flex min-h-[3rem] w-full items-center justify-center rounded-md border border-[#c9c4bb] bg-[#faf7f2] py-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#1a3021] transition hover:bg-[#f0ebe3] sm:text-xs"
+            >
+              Create an account
+            </Link>
           </div>
         </form>
 
-        <p className="text-center text-sm text-gray-500">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/register"
-            className="font-bold text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Sign up for free
-          </Link>
+        <p className="mt-10 text-center text-[11px] leading-relaxed text-neutral-500 sm:text-xs">
+          This site is protected by reCAPTCHA and the Google{" "}
+          <a href="https://policies.google.com/privacy" className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a href="https://policies.google.com/terms" className="underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+            Terms of Service
+          </a>{" "}
+          apply.
         </p>
       </div>
     </div>

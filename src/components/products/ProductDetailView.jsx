@@ -6,10 +6,19 @@ import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
+import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import ValuePropsBand from "@/components/home/ValuePropsBand";
 import { VALUE_PROPS } from "@/components/home/homeValuePropsData";
-import { ALL_SHOP_PRODUCTS } from "@/components/shop-all/shopAllData";
 import ProductCustomerReviews from "@/components/products/ProductCustomerReviews";
+import RelatedProductsCarousel from "@/components/products/RelatedProductsCarousel";
+import { ALL_SHOP_PRODUCTS } from "@/components/shop-all/shopAllData";
 
 const WHY_LOVE_FEATURES = [
   {
@@ -49,8 +58,13 @@ export default function ProductDetailView({ product }) {
     materials: false,
     shipping: false,
   });
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [notifyStep, setNotifyStep] = useState("form"); // "form" | "success"
+  const [notifyEmail, setNotifyEmail] = useState("");
 
-  const deadline = useMemo(() => Date.now() + (6 * 24 + 20) * 3600000 + 16 * 60000, []);
+  const outOfStock = product.stockQty <= 0;
+
+  const [deadline] = useState(() => Date.now() + (6 * 24 + 20) * 3600000 + 16 * 60000);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -69,6 +83,7 @@ export default function ProductDetailView({ product }) {
   const cartImage = selectedColor?.thumb ?? product.image;
 
   const handleAddToCart = () => {
+    if (outOfStock) return;
     addItem({
       slug: product.slug,
       name: product.name,
@@ -79,6 +94,32 @@ export default function ProductDetailView({ product }) {
       qty,
     });
   };
+
+  const handleNotifySubmit = (e) => {
+    e.preventDefault();
+    const email = notifyEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Enter a valid email",
+        description: "Please check your email address and try again.",
+      });
+      return;
+    }
+    setNotifyStep("success");
+  };
+
+  const handleNotifyDialogOpenChange = (open) => {
+    setNotifyOpen(open);
+    if (!open) {
+      setNotifyStep("form");
+      setNotifyEmail("");
+    }
+  };
+
+  const shipSubtitle = outOfStock
+    ? "No stock locally."
+    : "In stock to ship.";
 
   return (
     <>
@@ -184,12 +225,22 @@ export default function ProductDetailView({ product }) {
             </div>
 
             <p className="mt-6 text-sm leading-relaxed text-neutral-700 sm:text-[15px]">{product.description}</p>
-            <div className="mt-6 flex items-center gap-2 text-sm font-medium text-[#1a5734]">
-              <span className="relative flex size-2.5 shrink-0">
-                <span className="absolute inline-flex size-full rounded-full bg-green-600 opacity-80" aria-hidden />
-                <span className="absolute inline-flex size-full animate-[ping_1.25s_ease-out_infinite] rounded-full bg-green-500 opacity-65" aria-hidden />
+
+            <div className={cn("mt-6 flex items-center gap-2 text-sm font-medium", outOfStock ? "text-red-600" : "text-[#1a5734]")}>
+              <span
+                className={cn(
+                  "shrink-0 rounded-full",
+                  outOfStock ? "size-2 bg-red-600" : "relative flex size-2.5"
+                )}
+              >
+                {!outOfStock ? (
+                  <>
+                    <span className="absolute inline-flex size-full rounded-full bg-green-600 opacity-80" aria-hidden />
+                    <span className="absolute inline-flex size-full animate-[ping_1.25s_ease-out_infinite] rounded-full bg-green-500 opacity-65" aria-hidden />
+                  </>
+                ) : null}
               </span>
-              <span>{product.stockQty} in stock</span>
+              <span>{outOfStock ? "Out of stock" : `${product.stockQty} in stock`}</span>
             </div>
 
             <div className="mt-8">
@@ -231,7 +282,7 @@ export default function ProductDetailView({ product }) {
                 <Icon icon="mingcute:truck-fill" className="mt-0.5 size-6 shrink-0 text-[#1a3021]" aria-hidden />
                 <span>
                   <span className="font-home-heading block text-base text-[#1a3021]">Ship</span>
-                  <span className="mt-1 block text-sm text-neutral-600">In stock to ship.</span>
+                  <span className="mt-1 block text-sm text-neutral-600">{shipSubtitle}</span>
                 </span>
               </button>
               <button
@@ -254,33 +305,50 @@ export default function ProductDetailView({ product }) {
             </Link>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex h-[3rem] w-full max-w-[11rem] items-center justify-between rounded-sm border border-neutral-300/80 bg-white px-3">
+              {!outOfStock ? (
+                <div className="flex h-[3rem] w-full max-w-[11rem] items-center justify-between rounded-sm border border-neutral-300/80 bg-white px-3">
+                  <button
+                    type="button"
+                    className="p-2 text-neutral-700 hover:bg-neutral-50"
+                    aria-label="Decrease quantity"
+                    disabled={qty <= 1}
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  >
+                    <Icon icon="mingcute:subtract-fill" className="size-5" />
+                  </button>
+                  <span className="tabular-nums">{qty}</span>
+                  <button
+                    type="button"
+                    className="p-2 text-neutral-700 hover:bg-neutral-50 disabled:opacity-40"
+                    aria-label="Increase quantity"
+                    disabled={qty >= product.stockQty}
+                    onClick={() => setQty((q) => Math.min(product.stockQty, q + 1))}
+                  >
+                    <Icon icon="mingcute:add-line" className="size-5" />
+                  </button>
+                </div>
+              ) : null}
+              {!outOfStock ? (
                 <button
                   type="button"
-                  className="p-2 text-neutral-700 hover:bg-neutral-50"
-                  aria-label="Decrease quantity"
-                  disabled={qty <= 1}
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  onClick={handleAddToCart}
+                  className="font-home-sub h-[3rem] w-full shrink-0 rounded-sm bg-[#24352d] px-10 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#1e2c26] sm:flex-1"
                 >
-                  <Icon icon="mingcute:subtract-fill" className="size-5" />
+                  Add to cart
                 </button>
-                <span className="tabular-nums">{qty}</span>
+              ) : (
                 <button
                   type="button"
-                  className="p-2 text-neutral-700 hover:bg-neutral-50"
-                  aria-label="Increase quantity"
-                  onClick={() => setQty((q) => q + 1)}
+                  onClick={() => {
+                    setNotifyStep("form");
+                    setNotifyOpen(true);
+                  }}
+                  className="font-home-sub flex h-[3rem] w-full shrink-0 items-center justify-center gap-2 rounded-sm bg-[#24352d] px-10 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#1e2c26] sm:flex-1"
                 >
-                  <Icon icon="mingcute:add-line" className="size-5" />
+                  <Icon icon="mingcute:mail-line" className="size-5" aria-hidden />
+                  Notify me
                 </button>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="font-home-sub h-[3rem] w-full shrink-0 rounded-sm bg-[#24352d] px-10 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#1e2c26] sm:flex-1"
-              >
-                Add to cart
-              </button>
+              )}
             </div>
             <p className="mt-4 text-center text-xs text-neutral-600 sm:text-left">
               Pay in 4 easy installments with Klarna.
@@ -339,15 +407,227 @@ export default function ProductDetailView({ product }) {
         </div>
       </main>
 
+      <Dialog open={notifyOpen} onOpenChange={handleNotifyDialogOpenChange}>
+        <DialogContent
+          showCloseButton
+          className={cn(
+            "gap-6 rounded-lg border border-[#e0dcd3] bg-[#faf9f6] shadow-lg",
+            notifyStep === "form"
+              ? "max-h-[none] max-w-[min(calc(100vw-2rem),26rem)] p-6 sm:p-8"
+              : "max-h-[min(90vh,calc(100dvh-2rem))] max-w-[min(calc(100vw-1rem),52rem)] overflow-y-auto p-5 pb-6 sm:p-8 sm:pb-8"
+          )}
+        >
+          {notifyStep === "form" ? (
+            <>
+              <DialogHeader className="gap-2 space-y-0 text-left">
+                <DialogTitle className="font-home-heading text-xl font-normal leading-snug text-[#1a3021] sm:text-[1.375rem]">
+                  The product is currently out of stock
+                </DialogTitle>
+                <DialogDescription className="font-home-body text-sm leading-relaxed text-neutral-600">
+                  Do you want us to notify you when it is available?
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleNotifySubmit} className="space-y-4">
+                <label className="block">
+                  <span className="mb-1.5 block font-home-body text-xs font-medium text-neutral-800">
+                    Enter your email address
+                  </span>
+                  <input
+                    type="email"
+                    name="notify-email"
+                    value={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.value)}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2.5 font-home-body text-sm outline-none transition focus:border-[#1a3021] focus:ring-2 focus:ring-[#1a3021]/15"
+                  />
+                </label>
+                <p className="font-home-body text-[11px] leading-relaxed text-neutral-600">
+                  By submitting I represent that I have read and agree to Furniqo&apos;s{" "}
+                  <Link href="/terms" className="underline underline-offset-2 hover:text-neutral-900">
+                    Terms of Services
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="underline underline-offset-2 hover:text-neutral-900">
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
+                <button
+                  type="submit"
+                  className="font-home-sub flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#24352d] text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[#1e2c26]"
+                >
+                  <Icon icon="mingcute:mail-line" className="size-5 shrink-0" aria-hidden />
+                  Notify me
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <DialogHeader className="gap-3 space-y-0 text-left">
+                <DialogTitle className="font-home-heading text-2xl font-normal leading-snug text-[#1a3021] sm:text-[1.75rem]">
+                  Thank you
+                </DialogTitle>
+                <DialogDescription className="font-home-body text-sm leading-relaxed text-neutral-600 sm:text-[15px]">
+                  We will send you a notification when it is available.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-2 border-t border-[#e8e4dc] pt-6">
+                <h3 className="font-home-heading text-lg text-[#1a3021] sm:text-xl">Similar products</h3>
+                <SimilarProductsNotifyCarousel excludeSlug={product.slug} />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="mt-8">
         <ValuePropsBand />
       </div>
 
       <ProductWhyLoveIt lifestyleSrc={product.gallery?.[1] ?? "/sofa-beds-img.jpg"} />
-      <ProductYouMayAlsoLike excludeSlug={product.slug} />
+      <RelatedProductsCarousel
+        excludeSlug={product.slug}
+        sectionClassName="border-t border-[#e8e4dc] bg-[#f7f4ef]"
+      />
 
       <ProductCustomerReviews reviewTotal={product.reviews} />
     </>
+  );
+}
+
+function SimilarProductsNotifyCarousel({ excludeSlug }) {
+  const { addItem } = useCart();
+  const scrollerRef = useRef(null);
+  const [progress, setProgress] = useState(0);
+
+  const items = useMemo(() => {
+    const list = excludeSlug
+      ? ALL_SHOP_PRODUCTS.filter((p) => p.slug !== excludeSlug)
+      : [...ALL_SHOP_PRODUCTS];
+    return list.slice(0, 12);
+  }, [excludeSlug]);
+
+  const updateProgress = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setProgress(max <= 0 ? 100 : Math.min(100, Math.max(0, (el.scrollLeft / max) * 100)));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || items.length === 0) return undefined;
+    const schedule = () => requestAnimationFrame(updateProgress);
+    const rafId = schedule();
+    el.addEventListener("scroll", updateProgress, { passive: true });
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(rafId);
+      el.removeEventListener("scroll", updateProgress);
+      ro.disconnect();
+    };
+  }, [updateProgress, items.length]);
+
+  const scrollByDir = (dir) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: el.clientWidth * 0.55 * dir, behavior: "smooth" });
+  };
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <ul
+        ref={scrollerRef}
+        className="no-scrollbar flex list-none gap-3 overflow-x-auto scroll-smooth pb-1 pt-1 snap-x snap-mandatory sm:gap-4"
+      >
+        {items.map((p) => (
+          <li
+            key={p.slug}
+            className="w-[min(calc(50vw-1.75rem),200px)] shrink-0 snap-start sm:w-[200px] md:w-[216px]"
+          >
+            <article className="flex h-full flex-col rounded-sm border border-[#e8e3d9] bg-[#f4f1ea] p-3 text-center sm:p-3.5">
+              <Link href={`/products/${p.slug}`} className="block text-left">
+                <div className="relative mx-auto aspect-square w-full overflow-hidden rounded-[2px] bg-[#ece7de]">
+                  <Image
+                    src={p.image}
+                    alt={p.name}
+                    fill
+                    className="object-contain p-2 sm:p-2.5"
+                    sizes="200px"
+                  />
+                  <span className="absolute right-2 top-2 bg-[#B22222] px-1.5 py-0.5 font-home-sub text-[9px] font-semibold uppercase tracking-wide text-white">
+                    -{p.discount}%
+                  </span>
+                </div>
+                <h4 className="font-home-heading mt-2 line-clamp-2 min-h-[2.5rem] text-left text-sm leading-snug text-[#1a3021] sm:text-[15px]">
+                  {p.name}
+                </h4>
+                <div className="mt-1 flex flex-wrap items-center gap-0.5 text-amber-600" aria-hidden>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Icon key={i} icon="mingcute:star-fill" className="size-3 sm:size-3.5" />
+                  ))}
+                  <span className="ml-1 font-home-body text-[11px] text-neutral-600 sm:text-xs">({p.reviews} reviews)</span>
+                </div>
+                <p className="mt-1 flex flex-wrap items-baseline gap-2 font-home-body">
+                  <span className="text-[15px] font-semibold text-neutral-900 sm:text-base">${formatPrice(p.price)}</span>
+                  <span className="text-[13px] font-medium text-[#B22222] line-through sm:text-sm">${formatPrice(p.compareAt)}</span>
+                </p>
+              </Link>
+              <button
+                type="button"
+                className="font-home-sub mt-2 w-full border border-neutral-300/90 bg-[#f7f3ec] py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-800 transition hover:bg-[#ece7de]"
+                onClick={() =>
+                  addItem({
+                    slug: p.slug,
+                    name: p.name,
+                    image: p.image,
+                    price: p.price,
+                    compareAt: p.compareAt,
+                    variantLabel: null,
+                    qty: 1,
+                  })
+                }
+              >
+                Add to cart
+              </button>
+            </article>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-5 flex items-center justify-between gap-4">
+        <div className="h-px min-w-[6rem] max-w-[140px] flex-1 rounded-full bg-[#d8d2c7]">
+          <div
+            className="h-px rounded-full bg-[#24352d] transition-[width] duration-150 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => scrollByDir(-1)}
+            aria-label="Previous products"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#ddd7cb] bg-[#f6f3ed] text-[#5c645c] transition hover:bg-[#ece7de] sm:h-10 sm:w-10"
+          >
+            <Icon icon="mingcute:left-line" className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollByDir(1)}
+            aria-label="Next products"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#ddd7cb] bg-[#f6f3ed] text-[#5c645c] transition hover:bg-[#ece7de] sm:h-10 sm:w-10"
+          >
+            <Icon icon="mingcute:right-line" className="size-4" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -400,137 +680,6 @@ function ProductWhyLoveIt({ lifestyleSrc }) {
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 45vw"
             />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProductYouMayAlsoLike({ excludeSlug }) {
-  const { addItem } = useCart();
-  const scrollerRef = useRef(null);
-  const [progress, setProgress] = useState(0);
-
-  const items = useMemo(
-    () => ALL_SHOP_PRODUCTS.filter((p) => p.slug !== excludeSlug).slice(0, 12),
-    [excludeSlug]
-  );
-
-  const updateProgress = useCallback(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    setProgress(max <= 0 ? 100 : Math.min(100, Math.max(0, (el.scrollLeft / max) * 100)));
-  }, []);
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    updateProgress();
-    el.addEventListener("scroll", updateProgress, { passive: true });
-    const ro = new ResizeObserver(updateProgress);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", updateProgress);
-      ro.disconnect();
-    };
-  }, [updateProgress, items.length]);
-
-  const scrollByDir = (dir) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: el.clientWidth * 0.75 * dir, behavior: "smooth" });
-  };
-
-  if (items.length === 0) return null;
-
-  return (
-    <section className="border-t border-[#e8e4dc] bg-[#f7f4ef] py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="font-home-heading text-3xl tracking-tight text-[#1f2a22] sm:text-[2.5rem]">You may also like</h2>
-
-        <ul
-          ref={scrollerRef}
-          className="no-scrollbar mt-8 flex list-none gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory md:gap-5"
-        >
-          {items.map((p) => (
-            <li
-              key={p.slug}
-              className="w-[min(76vw,240px)] shrink-0 snap-start sm:w-[220px] md:w-[240px]"
-            >
-              <article className="flex h-full flex-col rounded-sm border border-[#e8e3d9] bg-[#f4f1ea] p-3 text-center sm:p-4">
-                <Link href={`/products/${p.slug}`} className="block">
-                  <div className="relative aspect-square overflow-hidden rounded-[2px] bg-[#ece7de]">
-                    <Image
-                      src={p.image}
-                      alt={p.name}
-                      fill
-                      className="object-contain p-2.5 sm:p-3.5"
-                      sizes="(max-width: 640px) 76vw, 240px"
-                    />
-                    <span className="absolute right-2 top-2 bg-[#B22222] px-2 py-0.5 text-[10px] font-semibold text-white">
-                      -{p.discount}%
-                    </span>
-                  </div>
-                  <h3 className="font-home-heading mt-3 line-clamp-2 text-sm text-[#1a3021] sm:text-base">{p.name}</h3>
-                  <div className="mt-1 flex justify-center gap-0.5 text-amber-600" aria-hidden>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Icon key={i} icon="mingcute:star-fill" className="size-3 sm:size-3.5" />
-                    ))}
-                    <span className="ml-1 text-[11px] text-neutral-600 sm:text-xs">({p.reviews} reviews)</span>
-                  </div>
-                  <p className="mt-1.5 flex flex-wrap items-baseline justify-center gap-1.5">
-                    <span className="text-sm font-semibold text-[#B22222] sm:text-base">${formatPrice(p.price)}</span>
-                    <span className="text-xs text-neutral-800 line-through sm:text-sm">${formatPrice(p.compareAt)}</span>
-                  </p>
-                </Link>
-                <button
-                  type="button"
-                  className="font-home-sub mt-3 w-full border border-neutral-300/90 bg-[#f7f3ec] py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-800 transition hover:bg-[#ece7de]"
-                  onClick={() =>
-                    addItem({
-                      slug: p.slug,
-                      name: p.name,
-                      image: p.image,
-                      price: p.price,
-                      compareAt: p.compareAt,
-                      variantLabel: null,
-                      qty: 1,
-                    })
-                  }
-                >
-                  Add to cart
-                </button>
-              </article>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-8 flex items-center justify-between gap-4">
-          <div className="h-px min-w-[6rem] max-w-[160px] flex-1 bg-[#d8d2c7]">
-            <div
-              className="h-px bg-[#1a3021] transition-[width] duration-150 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <button
-              type="button"
-              onClick={() => scrollByDir(-1)}
-              aria-label="Previous recommendations"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#ddd7cb] bg-[#f6f3ed] text-[#5c645c] transition hover:bg-[#ece7de]"
-            >
-              <Icon icon="mingcute:left-line" className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByDir(1)}
-              aria-label="Next recommendations"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#ddd7cb] bg-[#f6f3ed] text-[#5c645c] transition hover:bg-[#ece7de]"
-            >
-              <Icon icon="mingcute:right-line" className="size-4" />
-            </button>
           </div>
         </div>
       </div>

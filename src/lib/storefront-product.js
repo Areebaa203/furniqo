@@ -48,9 +48,16 @@ function middleCategoryFromName(name) {
 }
 
 function stockFromSlug(slug) {
+  /** Demo: one product wired as out-of-stock for PDP notify flow */
+  if (slug === "fluted-sofa" || slug === "fluted-sofa-1") return 0;
   let h = 0;
   for (let i = 0; i < slug.length; i += 1) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
   return 8 + (h % 40);
+}
+
+/** Stock quantity used for storefront shop line items (matches PDP semantics). */
+export function getShopLineStockQty(slug) {
+  return stockFromSlug(slug);
 }
 
 const DESCRIPTION_FALLBACK =

@@ -1,5 +1,20 @@
 export const JOURNAL_HERO_SLIDES = [
   {
+    id: "choosing-sofa-sectional",
+    src: "/journal-img-8.jpg",
+    position: "50% 58%",
+    alt: "Bright living room with a large beige sectional sofa, herringbone wood floors, and tall windows",
+    eyebrow: "Buying guide",
+    title: "Choosing between a sofa and a sectional",
+    description:
+      "Traffic paths, chaise direction, and scale—we compare silhouettes so your living room breathes.",
+    href: "/journal/choosing-sofa-sectional",
+    author: "Michael K.",
+    dateLabel: "1 Jan 2026",
+    readMinutes: 5,
+    hideHeroShare: true,
+  },
+  {
     id: "mixing-wood-tones",
     src: "/journal-theme-img.jpg",
     position: "62% 100%",

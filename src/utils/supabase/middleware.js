@@ -1,5 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { canAccessDashboard, postAuthPathForRole } from "@/lib/auth/roles";
+
+async function fetchProfileRole(supabase, userId) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  return data?.role ?? "user";
+}
 
 /**
  * Refreshes the user session inside middleware so cookies stay up-to-date
@@ -29,12 +39,10 @@ export async function updateSession(request) {
     }
   );
 
-  // Refresh session — do NOT remove this call
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ─── Protected routes ───────────────────────────────────────────────────
   const { pathname } = request.nextUrl;
 
   const publicPaths = [
@@ -55,8 +63,18 @@ export async function updateSession(request) {
     "/reset-password",
   ];
 
+  const isDashboardPath = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+
   const isPublic =
     publicPaths.some((p) => pathname === p) ||
+    pathname.startsWith("/journal") ||
+    pathname === "/about" ||
+    pathname === "/faq" ||
+    pathname === "/contact" ||
+    pathname === "/terms" ||
+    pathname === "/privacy" ||
+    pathname.startsWith("/search") ||
+    pathname === "/checkout" ||
     pathname === "/shop-all" ||
     pathname === "/products" ||
     pathname.startsWith("/products/") ||
@@ -70,8 +88,22 @@ export async function updateSession(request) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && authEntryPaths.includes(pathname) && pathname !== "/auth/callback") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  const needsRole =
+    !!user &&
+    (isDashboardPath ||
+      authEntryPaths.includes(pathname));
+
+  let profileRole = null;
+  if (needsRole) {
+    profileRole = await fetchProfileRole(supabase, user.id);
+  }
+
+  if (user && isDashboardPath && !canAccessDashboard(profileRole)) {
+    return NextResponse.redirect(new URL("/account/orders", request.url));
+  }
+
+  if (user && authEntryPaths.includes(pathname)) {
+    return NextResponse.redirect(new URL(postAuthPathForRole(profileRole), request.url));
   }
 
   return supabaseResponse;

@@ -32,6 +32,7 @@ export const JOURNAL_LISTING_POSTS = [
       title: "How to choose the right sofa for your space",
       excerpt: "Measurements, cushion fill, arm height, and fabric—we walk through what actually matters before you commit.",
       image: "/journal-img-2.jpg",
+      journalHref: "/journal/choosing-sofa-sectional",
     },
     {
       slug: `post-3-${i}`,
@@ -86,6 +87,7 @@ export const JOURNAL_LISTING_POSTS = [
       title: "Sofa vs. sectional: Which fits your layout?",
       excerpt: "Traffic paths, chaise direction, and scale—we compare silhouettes so your living room breathes.",
       image: "/journal-img-8.jpg",
+      journalHref: "/journal/choosing-sofa-sectional",
     },
     {
       slug: `post-9-${i}`,

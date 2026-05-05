@@ -29,7 +29,7 @@ function getPaginationItems(totalPages, currentPage) {
 }
 
 function ListingCard({ post }) {
-  const href = `/journal/${post.slug}`;
+  const href = post.journalHref ?? `/journal/${post.slug}`;
   return (
     <article className="flex flex-col">
       <Link href={href} className="group block overflow-hidden rounded-sm bg-[#e8e4de]">

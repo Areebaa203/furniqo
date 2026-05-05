@@ -1,13 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { canAccessDashboard } from "@/lib/auth/roles";
+
+const DEFAULT_POST_AUTH = "/account/orders";
+
+function sanitizeInternalPath(path, fallback) {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) {
+    return fallback;
+  }
+  return path;
+}
 
 export async function GET(request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/dashboard";
+  const next = requestUrl.searchParams.get("next") ?? DEFAULT_POST_AUTH;
   const error = requestUrl.searchParams.get("error");
   const errorDescription = requestUrl.searchParams.get("error_description");
-  // /auth/callback?error=access_denied&error_description=User+canceled
   const origin = requestUrl.origin;
 
   if (error) {
@@ -38,6 +47,27 @@ export async function GET(request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
-  return NextResponse.redirect(new URL(safeNext, origin));
+  let redirectPath = sanitizeInternalPath(next, DEFAULT_POST_AUTH);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = profile?.role ?? "user";
+
+    if (redirectPath === "/dashboard" || redirectPath.startsWith("/dashboard/")) {
+      if (!canAccessDashboard(role)) {
+        redirectPath = DEFAULT_POST_AUTH;
+      }
+    }
+  }
+
+  return NextResponse.redirect(new URL(redirectPath, origin));
 }

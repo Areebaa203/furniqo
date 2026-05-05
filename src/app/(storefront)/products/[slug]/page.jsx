@@ -15,5 +15,5 @@ export default async function ProductPage({ params }) {
   const { slug } = await params;
   const product = resolveStorefrontProduct(slug);
   if (!product) notFound();
-  return <ProductDetailView product={product} />;
+  return <ProductDetailView key={product.slug} product={product} />;
 }

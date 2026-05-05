@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { signInSchema } from "@/lib/validations/auth";
+import { postAuthPathForRole } from "@/lib/auth/roles";
 
 /**
  * POST /api/auth/signin
@@ -59,10 +60,19 @@ export async function POST(request) {
       );
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const redirectTo = postAuthPathForRole(profile?.role ?? "user");
+
     return NextResponse.json(
       {
         success: true,
         message: "Signed in successfully.",
+        redirectTo,
         user: {
           id: data.user?.id,
           email: data.user?.email,

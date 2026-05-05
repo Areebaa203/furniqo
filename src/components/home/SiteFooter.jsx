@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,19 +16,7 @@ import {
 const BG = "#FDFBF7";
 const BTN_GREEN = "#2F3E33";
 
-function FurniqoWordmark({ className }) {
-  return (
-    <span
-      className={cn(
-        "inline-block font-home-heading font-normal uppercase leading-none tracking-[0.18em] text-[#2D3E33]",
-        className
-      )}
-    >
-      FURNIQO
-      <span className="align-super text-[0.42em] font-normal leading-none tracking-normal">®</span>
-    </span>
-  );
-}
+
 
 function NewsletterBlock() {
   const [email, setEmail] = useState("");
@@ -71,11 +60,11 @@ function NewsletterBlock() {
       </form>
       <p className="mt-3 max-w-md font-home-body text-[11px] leading-relaxed text-neutral-500">
         By subscribing you agree to our{" "}
-        <Link href="#" className="underline underline-offset-2 hover:text-neutral-800">
+        <Link href="/terms" className="underline underline-offset-2 hover:text-neutral-800">
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="#" className="underline underline-offset-2 hover:text-neutral-800">
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-neutral-800">
           Privacy Policy
         </Link>
         .
@@ -147,7 +136,13 @@ export default function SiteFooter() {
         <div className="grid grid-cols-1 gap-0 md:grid-cols-12 md:gap-10 lg:gap-14">
           <div className="max-w-xl md:col-span-5 lg:col-span-4">
             <Link href="/" className="inline-block" aria-label="Furniqo Home">
-              <FurniqoWordmark className="text-[2rem] tracking-[0.2em] sm:text-[2.35rem]" />
+              <Image 
+                src="/furniqo-logo.svg" 
+                alt="Furniqo Logo" 
+                width={140} 
+                height={40} 
+                className="h-8 w-auto sm:h-9" 
+              />
             </Link>
             <div className="mt-5 flex items-center gap-5">
               {FOOTER_SOCIAL.map((s) => (
@@ -183,13 +178,15 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div className="pointer-events-none relative mt-12 select-none sm:mt-16 md:mt-20" aria-hidden>
-          <p
-            className="text-center font-home-heading font-light leading-none tracking-[0.12em] text-[#2D3E33]/[0.15] text-[min(3.2rem,14vw)] sm:text-[min(4.5rem,13vw)] md:text-[6.5rem] lg:text-[7.5rem]"
-          >
-            FURNIQO
-            <span className="align-super text-[0.38em]">®</span>
-          </p>
+        <div className="pointer-events-none relative mt-12 flex justify-center select-none sm:mt-16 md:mt-20" aria-hidden>
+          <div className="relative h-[4rem] w-full max-w-[500px] opacity-[0.12] sm:h-[6rem] md:h-[8rem] lg:h-[10rem]">
+            <Image
+              src="/furniqo-logo.svg"
+              alt=""
+              fill
+              className="object-contain"
+            />
+          </div>
         </div>
 
         <div className="mt-10 border-t border-neutral-300/70 pt-6 sm:mt-12">

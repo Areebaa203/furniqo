@@ -344,21 +344,17 @@ export default function ShopAllView() {
         </div>
       ) : null}
 
-      <div
-        className={
-          drawer
-            ? "sticky top-0 z-[1] flex items-center justify-between gap-3 border-b border-[#e0dcd3] bg-[#f7f4ef] px-4 py-3"
-            : "border-b border-[#e0dcd3] pb-3 pt-1"
-        }
-      >
-        <button
-          type="button"
-          onClick={() => resetAll()}
-          className="text-xs font-semibold uppercase tracking-wide text-[#1a3021] underline underline-offset-2"
-        >
-          Reset all
-        </button>
-      </div>
+      {!drawer && (
+        <div className="border-b border-[#e0dcd3] pb-3 pt-1">
+          <button
+            type="button"
+            onClick={() => resetAll()}
+            className="text-xs font-semibold uppercase tracking-wide text-[#1a3021] underline underline-offset-2"
+          >
+            Reset all
+          </button>
+        </div>
+      )}
 
       <div className={drawer ? "flex-1 space-y-0 overflow-y-auto px-4 pb-28 pt-3" : "space-y-0 pt-2"}>
         <ToggleRow open={roomOpen} onToggle={() => setRoomOpen((v) => !v)} title="Room">
@@ -452,16 +448,45 @@ export default function ShopAllView() {
             </div>
           </div>
         </ToggleRow>
+        {drawer && (
+          <ToggleRow open={true} onToggle={() => {}} title="Sort By">
+            <div className="relative mt-1">
+              <select
+                id="shop-sort-mobile"
+                value={sortId}
+                onChange={(e) => setSortId(e.target.value)}
+                className="font-home-sub w-full appearance-none rounded-sm border border-[#d6d0c5] bg-white py-2.5 pl-3 pr-9 text-xs font-semibold text-[#1a3021]"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <Icon
+                icon="mingcute:down-line"
+                className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-neutral-500"
+              />
+            </div>
+          </ToggleRow>
+        )}
       </div>
 
       {drawer ? (
-        <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[#e0dcd3] bg-[#f7f4ef] p-4 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-[60] flex items-center justify-between gap-4 border-t border-[#e0dcd3] bg-[#f7f4ef] p-4 lg:hidden">
+          <button
+            type="button"
+            onClick={resetAll}
+            className="text-xs font-semibold uppercase tracking-wide text-[#1a3021] underline underline-offset-2"
+          >
+            Reset all
+          </button>
           <button
             type="button"
             onClick={() => setFiltersOpen(false)}
-            className="font-home-sub w-full rounded-sm bg-[#1a3021] py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white"
+            className="font-home-sub flex-1 max-w-[160px] rounded-sm bg-[#1a3021] py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white"
           >
-            Show {filteredSorted.length} results
+            APPLY
           </button>
         </div>
       ) : null}
@@ -536,7 +561,7 @@ export default function ShopAllView() {
               aria-label="Close filters overlay"
               onClick={() => setFiltersOpen(false)}
             />
-            <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(100%,380px)] flex-col bg-[#f7f4ef] shadow-2xl">
+            <aside className="fixed inset-y-0 left-0 z-50 flex w-full flex-col bg-[#f7f4ef] shadow-2xl">
               {renderFiltersPanel(true)}
             </aside>
           </>

@@ -137,7 +137,7 @@ export async function POST(request) {
           email: user.email,
           avatar_url: profile?.avatar_url || null,
           total_spent: 0,
-          orders_count: 0,
+          total_orders: 0,
           status: 'active'
         })
         .select("id")

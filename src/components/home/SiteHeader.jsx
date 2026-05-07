@@ -12,6 +12,7 @@ import SiteSearchPanel from "@/components/home/SiteSearchPanel";
 import { useCart } from "@/contexts/CartContext";
 import { DesktopMegaMenuPanel } from "@/components/home/DesktopMegaMenuPanel";
 import { useStorefrontSession } from "@/hooks/useStorefrontSession";
+import { prepareCartForSignOut } from "@/lib/cart/prepareCartForSignOut";
 
 const navSecondary = [
   { label: "Journal", href: "/journal" },
@@ -35,6 +36,11 @@ export default function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchPanelKey, setSearchPanelKey] = useState(0);
   const { setCartOpen, totalQty } = useCart();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const openSearch = () => {
     setMegaOpen(false);
@@ -72,6 +78,7 @@ export default function SiteHeader() {
   const accountActive = pathname?.startsWith("/account");
 
   const handleSignOut = async () => {
+    await prepareCartForSignOut();
     await fetch("/api/auth/signout", { method: "POST" });
     router.push("/");
     router.refresh();
@@ -121,10 +128,10 @@ export default function SiteHeader() {
               type="button"
               onClick={() => setCartOpen(true)}
               className="relative rounded-full p-2.5 text-[#1a3021] transition hover:bg-black/[0.04]"
-              aria-label={totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
+              aria-label={mounted && totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
             >
               <Icon icon="mingcute:shopping-bag-3-line" className="size-[1.375rem]" />
-              {totalQty > 0 ? (
+              {mounted && totalQty > 0 ? (
                 <span className="absolute right-1 top-1 flex min-w-[1rem] items-center justify-center rounded-full bg-[#24352d] px-1 text-[9px] font-bold tabular-nums text-white">
                   {totalQty > 99 ? "99+" : totalQty}
                 </span>
@@ -215,10 +222,10 @@ export default function SiteHeader() {
                 type="button"
                 onClick={() => setCartOpen(true)}
                 className="relative rounded-full p-2 text-[#3d4a42] transition-colors hover:bg-black/5 hover:text-[#1a3d2e]"
-                aria-label={totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
+                aria-label={mounted && totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
               >
                 <Icon icon="mingcute:shopping-bag-3-line" className="size-5 sm:size-6" />
-                {totalQty > 0 ? (
+                {mounted && totalQty > 0 ? (
                   <span className="absolute right-0 top-0 flex size-[18px] items-center justify-center rounded-full bg-[#24352d] text-[10px] font-bold tabular-nums text-white sm:size-5 sm:text-[11px]">
                     {totalQty > 99 ? "99+" : totalQty}
                   </span>
@@ -231,7 +238,10 @@ export default function SiteHeader() {
             <div className="relative -mt-px pt-px">
               <div className="pointer-events-none absolute inset-x-0 top-0 z-[45] h-3 -translate-y-2" aria-hidden />
               <div onMouseEnter={() => setMegaOpen(true)}>
-                <DesktopMegaMenuPanel guttersClassName={SITE_HEADER_GUTTERS} />
+                <DesktopMegaMenuPanel
+                  guttersClassName={SITE_HEADER_GUTTERS}
+                  onItemClick={() => setMegaOpen(false)}
+                />
               </div>
             </div>
           ) : null}
@@ -292,10 +302,10 @@ export default function SiteHeader() {
                   closeDrawer();
                 }}
                 className="relative rounded-full p-2.5 text-[#333333]"
-                aria-label={totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
+                aria-label={mounted && totalQty > 0 ? `Cart, ${totalQty} items` : "Cart"}
               >
                 <Icon icon="mingcute:shopping-bag-3-line" className="size-[1.35rem]" />
-                {totalQty > 0 ? (
+                {mounted && totalQty > 0 ? (
                   <span className="absolute right-0.5 top-0.5 flex min-w-[1rem] justify-center rounded-full bg-[#24352d] px-1 text-[9px] font-bold text-white">
                     {totalQty > 99 ? "99+" : totalQty}
                   </span>

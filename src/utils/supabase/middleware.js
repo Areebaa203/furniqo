@@ -75,6 +75,7 @@ export async function updateSession(request) {
     pathname === "/privacy" ||
     pathname.startsWith("/search") ||
     pathname === "/checkout" ||
+    pathname.startsWith("/checkout/") ||
     pathname === "/shop-all" ||
     pathname === "/products" ||
     pathname.startsWith("/products/") ||

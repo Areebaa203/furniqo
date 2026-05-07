@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { MEGA_MENU_COLUMNS, MEGA_MENU_PROMO } from "@/components/home/megaMenuData";
 
 /** Full-width drop-down; parent controls visibility and hover zone */
-export function DesktopMegaMenuPanel({ guttersClassName }) {
+export function DesktopMegaMenuPanel({ guttersClassName, onItemClick }) {
   const promo = MEGA_MENU_PROMO;
 
   return (
@@ -24,6 +24,7 @@ export function DesktopMegaMenuPanel({ guttersClassName }) {
                         <li key={item.label}>
                           <Link
                             href={item.href}
+                            onClick={onItemClick}
                             className="font-home-body text-[15px] text-[#333333] transition hover:text-[#1a3021]"
                           >
                             {item.label}
@@ -33,6 +34,7 @@ export function DesktopMegaMenuPanel({ guttersClassName }) {
                       <li>
                         <Link
                           href={group.showAllHref}
+                          onClick={onItemClick}
                           className="font-home-body text-[15px] text-[#333333] underline decoration-[#333333] underline-offset-[3px] transition hover:text-[#1a3021]"
                         >
                           Show all

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { SITE_HEADER_GUTTERS } from "@/components/home/SiteHeader";
 import { JOURNAL_HERO_SLIDES } from "@/components/journal/journalHeroData";
 
-const AUTO_MS = 9000;
+const AUTO_MS = 8000;
 
 export default function JournalHero() {
   const [index, setIndex] = useState(0);

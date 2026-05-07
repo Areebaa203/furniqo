@@ -31,7 +31,7 @@ export function AccountOrdersEmpty() {
         </p>
 
         <Link
-          href="/products"
+          href="/shop-all"
           className="font-home-sub mt-10 inline-flex min-h-[3rem] w-full max-w-xs items-center justify-center rounded-lg px-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:opacity-92 sm:w-auto sm:min-w-[14rem]"
           style={{ backgroundColor: GREEN }}
         >

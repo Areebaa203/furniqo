@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { createClient } from "@/utils/supabase/client";
-import { appendOrderForUser } from "@/lib/account/localOrders";
+import { resolveSupabaseUserId } from "@/utils/supabase/resolveUserId";
 
 const BG_PAGE = "#F9F7F2";
 const BG_SUMMARY = "#f0ebe3";
@@ -332,37 +332,36 @@ export default function CheckoutView() {
   const handlePlaceOrder = async () => {
     setPlaceError("");
     const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    let uid = session?.user?.id ?? null;
-    if (!uid) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      uid = user?.id ?? null;
-    }
+    const uid = await resolveSupabaseUserId(supabase);
     if (!uid) {
       router.push("/login?next=/checkout");
       return;
     }
     setPlacing(true);
     try {
-      appendOrderForUser(uid, {
-        lines: items.map((line) => ({
-          slug: line.slug,
-          name: line.name,
-          image: line.image,
-          price: line.price,
-          compareAt: line.compareAt,
-          variantLabel: line.variantLabel,
-          qty: line.qty,
-        })),
-        total: grandTotal,
-        itemsCount: totalQty,
-        shippingCost,
-        discountAmount,
+      const res = await fetch("/api/account/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lines: items.map((line) => ({
+            slug: line.slug,
+            name: line.name,
+            image: line.image,
+            price: line.price,
+            compareAt: line.compareAt,
+            variantLabel: line.variantLabel,
+            qty: line.qty,
+          })),
+          total: grandTotal,
+          itemsCount: totalQty,
+          shippingCost,
+          discountAmount,
+        }),
       });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Could not place order");
+      }
       clearCart();
       router.push("/account/orders");
       router.refresh();

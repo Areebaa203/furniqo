@@ -1,7 +1,8 @@
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
 export async function createClient() {
+  const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -23,6 +24,18 @@ export async function createClient() {
           }
         },
       },
+    }
+  );
+}
+export async function createAdminClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      cookies: {
+        getAll() { return [] },
+        setAll() { }
+      }
     }
   );
 }

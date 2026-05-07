@@ -1,123 +1,44 @@
 "use client";
 
 import * as React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem as addItemAction,
+  clearCart as clearCartAction,
+  FREE_SHIPPING_THRESHOLD,
+  openCart as openCartAction,
+  removeLine as removeLineAction,
+  setCartOpen as setCartOpenAction,
+  updateQty as updateQtyAction,
+} from "@/store/slices/cartSlice";
 
-const STORAGE_KEY = "furniqo-cart-v1";
+export { FREE_SHIPPING_THRESHOLD };
 
-/** @typedef {{
- *   lineId: string;
- *   slug: string;
- *   name: string;
- *   image: string;
- *   price: number;
- *   compareAt: number;
- *   variantLabel?: string | null;
- *   qty: number;
- * }} CartLine */
+export function useCart() {
+  const dispatch = useDispatch();
+  const items = useSelector((s) => s.cart.items);
+  const cartOpen = useSelector((s) => s.cart.cartOpen);
 
-/** @type {React.Context<{ items: CartLine[]; addItem: (p: Omit<CartLine, "lineId" | "qty"> & { qty?: number }) => void; updateQty: (lineId: string, qty: number) => void; removeLine: (lineId: string) => void; clearCart: () => void; totalQty: number; subtotal: number; openCart: () => void; setCartOpen: (v: boolean) => void; cartOpen: boolean } | null>} */
-const CartContext = React.createContext(null);
+  const addItem = React.useCallback((payload) => dispatch(addItemAction(payload)), [dispatch]);
 
-function lineIdFrom(slug, variantKey) {
-  return `${slug}::${variantKey ?? "default"}`;
-}
+  const updateQty = React.useCallback(
+    (lineId, qty) => dispatch(updateQtyAction({ lineId, qty })),
+    [dispatch]
+  );
 
-function loadStored() {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (x) =>
-        x &&
-        typeof x.lineId === "string" &&
-        typeof x.slug === "string" &&
-        typeof x.name === "string" &&
-        typeof x.price === "number" &&
-        typeof x.qty === "number" &&
-        x.qty > 0
-    );
-  } catch {
-    return [];
-  }
-}
+  const removeLine = React.useCallback((lineId) => dispatch(removeLineAction(lineId)), [dispatch]);
 
-export function CartProvider({ children }) {
-  const [items, setItems] = React.useState([]);
-  const [hydrated, setHydrated] = React.useState(false);
-  const [cartOpen, setCartOpen] = React.useState(false);
+  const clearCart = React.useCallback(() => dispatch(clearCartAction()), [dispatch]);
 
-  React.useEffect(() => {
-    setItems(loadStored());
-    setHydrated(true);
-  }, []);
+  const openCart = React.useCallback(() => dispatch(openCartAction()), [dispatch]);
 
-  React.useEffect(() => {
-    if (!hydrated || typeof window === "undefined") return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      /* ignore quota */
-    }
-  }, [items, hydrated]);
-
-  const openCart = React.useCallback(() => setCartOpen(true), []);
-
-  const addItem = React.useCallback((payload) => {
-    const variantKey = payload.variantLabel ?? "default";
-    const lineId = lineIdFrom(payload.slug, variantKey);
-    const qtyAdd = Math.max(1, Math.floor(payload.qty ?? 1));
-    setItems((prev) => {
-      const idx = prev.findIndex((l) => l.lineId === lineId);
-      if (idx === -1) {
-        return [
-          ...prev,
-          {
-            lineId,
-            slug: payload.slug,
-            name: payload.name,
-            image: payload.image,
-            price: payload.price,
-            compareAt: payload.compareAt,
-            variantLabel: payload.variantLabel ?? null,
-            qty: qtyAdd,
-          },
-        ];
-      }
-      const next = [...prev];
-      next[idx] = { ...next[idx], qty: next[idx].qty + qtyAdd };
-      return next;
-    });
-    setCartOpen(true);
-  }, []);
-
-  const updateQty = React.useCallback((lineId, qty) => {
-    const q = Math.floor(qty);
-    if (q < 1) {
-      setItems((prev) => prev.filter((l) => l.lineId !== lineId));
-      return;
-    }
-    setItems((prev) => prev.map((l) => (l.lineId === lineId ? { ...l, qty: q } : l)));
-  }, []);
-
-  const removeLine = React.useCallback((lineId) => {
-    setItems((prev) => prev.filter((l) => l.lineId !== lineId));
-  }, []);
+  const setCartOpenFn = React.useCallback((v) => dispatch(setCartOpenAction(v)), [dispatch]);
 
   const totalQty = React.useMemo(() => items.reduce((s, l) => s + l.qty, 0), [items]);
 
-  const subtotal = React.useMemo(
-    () => items.reduce((s, l) => s + l.price * l.qty, 0),
-    [items]
-  );
+  const subtotal = React.useMemo(() => items.reduce((s, l) => s + l.price * l.qty, 0), [items]);
 
-  const clearCart = React.useCallback(() => {
-    setItems([]);
-  }, []);
-
-  const value = React.useMemo(
+  return React.useMemo(
     () => ({
       items,
       addItem,
@@ -127,19 +48,20 @@ export function CartProvider({ children }) {
       totalQty,
       subtotal,
       openCart,
-      setCartOpen,
+      setCartOpen: setCartOpenFn,
       cartOpen,
     }),
-    [items, addItem, updateQty, removeLine, clearCart, totalQty, subtotal, openCart, cartOpen]
+    [
+      items,
+      addItem,
+      updateQty,
+      removeLine,
+      clearCart,
+      totalQty,
+      subtotal,
+      openCart,
+      setCartOpenFn,
+      cartOpen,
+    ]
   );
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
-
-export function useCart() {
-  const ctx = React.useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
-}
-
-export const FREE_SHIPPING_THRESHOLD = 100;

@@ -77,37 +77,19 @@ CREATE TABLE profiles (
   full_name TEXT,
   email TEXT,
   avatar_url TEXT,
-  phone TEXT,
   role user_role DEFAULT 'user',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Auto-create a profile row whenever a new auth user is created.
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, email, avatar_url, role)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.email),
-    NEW.email,
-    NEW.raw_user_meta_data ->> 'avatar_url',
-    COALESCE((NEW.raw_app_meta_data ->> 'role')::user_role, 'user'::user_role)
-  )
-  ON CONFLICT (id) DO UPDATE
-  SET full_name = EXCLUDED.full_name,
-      email = EXCLUDED.email,
-      avatar_url = EXCLUDED.avatar_url;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
+-- User email + in-app (dashboard) notification toggles. Used by /api/settings/notifications and DB triggers.
+CREATE TABLE user_preferences (
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE PRIMARY KEY,
+  email_orders BOOLEAN DEFAULT TRUE,
+  email_stock BOOLEAN DEFAULT TRUE,
+  email_marketing BOOLEAN DEFAULT FALSE,
+  push_orders BOOLEAN DEFAULT TRUE,
+  push_messages BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 -- 2. Customers
 CREATE TABLE customers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -353,11 +335,11 @@ CREATE TABLE messages (
   text TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 -- ==========================================
 -- STEP 4: INITIAL SEED DATA
 -- ==========================================
 
+-- 2. Insert initial mock data (20 items)
 INSERT INTO products (name, category, price, stock, status, sales, image_url)
 VALUES 
   ('Wireless Headphones', 'Electronics', 129.00, 45, 'active', 120, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200&auto=format&fit=crop'),
@@ -380,3 +362,261 @@ VALUES
   ('Espresso Machine', 'Electronics', 450.00, 3, 'active', 25, 'https://images.unsplash.com/photo-1510520434124-5bc7e642b61d?q=80&w=200&auto=format&fit=crop'),
   ('Hoodie Oversized', 'Clothing', 55.00, 80, 'active', 210, 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=200&auto=format&fit=crop'),
   ('Desk Chair', 'Furniture', 180.00, 12, 'active', 30, 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=200&auto=format&fit=crop');
+
+INSERT INTO content (
+  title,
+  description,
+  type,
+  status,
+  author_id,
+  thumbnail_url,
+  views,
+  likes,
+  comments_count,
+  published_at,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    'Summer Collection Launch',
+    'Discover the latest trends for the summer season with our exclusive collection launch event.',
+    'article',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=400&auto=format&fit=crop',
+    1200,
+    145,
+    23,
+    '2023-10-24T10:00:00Z',
+    '2023-10-24T10:00:00Z',
+    NOW()
+  ),
+  (
+    'How to Style Your Outfit',
+    'A comprehensive guide on styling your daily outfits for maximum impact.',
+    'video',
+    'draft',
+    NULL,
+    'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop',
+    0,
+    0,
+    0,
+    NULL,
+    '2023-10-23T09:00:00Z',
+    NOW()
+  ),
+  (
+    'Black Friday Sale Banner',
+    'Promotional banner for the upcoming Black Friday sales event.',
+    'banner',
+    'scheduled',
+    NULL,
+    'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?q=80&w=400&auto=format&fit=crop',
+    0,
+    0,
+    0,
+    '2026-11-20T08:00:00Z',
+    '2026-10-28T08:00:00Z',
+    NOW()
+  ),
+  (
+    'New Arrivals: Winter 2024',
+    'Get a sneak peek at our cozy and stylish winter arrivals.',
+    'article',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=400&auto=format&fit=crop',
+    3500,
+    210,
+    45,
+    '2023-10-20T11:00:00Z',
+    '2023-10-20T11:00:00Z',
+    NOW()
+  ),
+  (
+    'Customer Review Highlight',
+    'Real customers share their honest feedback about our best-selling products.',
+    'video',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?q=80&w=400&auto=format&fit=crop',
+    890,
+    56,
+    12,
+    '2023-10-18T12:30:00Z',
+    '2023-10-18T12:30:00Z',
+    NOW()
+  ),
+  (
+    'Product Spotlight: Smart Watch',
+    'An in-depth look at the features and benefits of our latest Smart Watch.',
+    'product',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
+    2100,
+    180,
+    34,
+    '2023-10-15T14:00:00Z',
+    '2023-10-15T14:00:00Z',
+    NOW()
+  ),
+  (
+    'Top 10 Accessories for 2026',
+    'A curated list of must-have accessories this year.',
+    'article',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1576053139778-7e32f2ae3cfd?q=80&w=400&auto=format&fit=crop',
+    1670,
+    134,
+    19,
+    '2026-01-11T09:15:00Z',
+    '2026-01-11T09:15:00Z',
+    NOW()
+  ),
+  (
+    'Behind the Scenes: Product Shoot',
+    'Take a quick look at our latest behind-the-scenes production process.',
+    'video',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=400&auto=format&fit=crop',
+    980,
+    75,
+    9,
+    '2026-02-05T13:00:00Z',
+    '2026-02-05T13:00:00Z',
+    NOW()
+  ),
+  (
+    'Spring Sale Hero Banner',
+    'Main hero banner designed for spring campaign.',
+    'banner',
+    'draft',
+    NULL,
+    'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop',
+    0,
+    0,
+    0,
+    NULL,
+    '2026-03-02T10:20:00Z',
+    NOW()
+  ),
+  (
+    'Fitness Essentials Product Push',
+    'Promotional content for fitness essentials category.',
+    'product',
+    'scheduled',
+    NULL,
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=400&auto=format&fit=crop',
+    0,
+    0,
+    0,
+    '2026-05-10T07:30:00Z',
+    '2026-04-25T07:30:00Z',
+    NOW()
+  ),
+  (
+    'Email Marketing Content Checklist',
+    'A practical checklist for writing high-converting campaign content.',
+    'article',
+    'published',
+    NULL,
+    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=400&auto=format&fit=crop',
+    1430,
+    102,
+    17,
+    '2026-01-26T15:45:00Z',
+    '2026-01-26T15:45:00Z',
+    NOW()
+  ),
+  (
+    'Weekend Promo Reel',
+    'Short-form promotional reel for weekend discounts.',
+    'video',
+    'draft',
+    NULL,
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=400&auto=format&fit=crop',
+    0,
+    0,
+    0,
+    NULL,
+    '2026-04-01T16:10:00Z',
+    NOW()
+  );
+  -- Insert initial mock data for discounts
+INSERT INTO discounts (id, code, type, value, status, used_count, usage_limit, start_date, end_date)
+VALUES 
+  (gen_random_uuid(), 'SUMMER2024', 'percentage', 20, 'active', 145, 500, '2024-06-01', '2024-08-31'),
+  (gen_random_uuid(), 'WELCOME10', 'percentage', 10, 'active', 892, NULL, '2024-01-01', NULL),
+  (gen_random_uuid(), 'FLASH50', 'fixed', 50, 'expired', 50, 50, '2024-05-10', '2024-05-12'),
+  (gen_random_uuid(), 'FREESHIP', 'free_shipping', 0, 'scheduled', 0, 100, '2024-12-01', '2024-12-31'),
+  (gen_random_uuid(), 'BLACKFRIDAY', 'percentage', 40, 'scheduled', 0, NULL, '2024-11-24', '2024-11-27'),
+  (gen_random_uuid(), 'WINTER25', 'percentage', 25, 'scheduled', 0, 1000, '2024-12-01', '2025-02-28'),
+  (gen_random_uuid(), 'SPRING15', 'percentage', 15, 'expired', 320, 500, '2024-03-01', '2024-05-31'),
+  (gen_random_uuid(), 'NEWYEAR24', 'fixed', 24, 'expired', 1500, NULL, '2023-12-25', '2024-01-05'),
+  (gen_random_uuid(), 'VIPONLY', 'percentage', 30, 'active', 84, 100, '2024-01-15', NULL),
+  (gen_random_uuid(), 'B2BSPECIAL', 'percentage', 15, 'active', 211, NULL, '2024-02-01', NULL),
+  (gen_random_uuid(), 'LOYALTY50', 'fixed', 50, 'active', 45, 50, '2024-06-15', '2024-12-31'),
+  (gen_random_uuid(), 'HALLOWEEN', 'percentage', 31, 'scheduled', 0, 310, '2024-10-25', '2024-10-31'),
+  (gen_random_uuid(), 'CYBERMONDAY', 'percentage', 45, 'scheduled', 0, NULL, '2024-12-02', '2024-12-03');
+INSERT INTO store_settings (
+  store_name,
+  homepage_title,
+  currency,
+  timezone
+)
+VALUES (
+  'My Store',
+  'Welcome to My Store',
+  'PKR',
+  'Asia/Karachi'
+);
+CREATE TABLE user_preferences (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  email_orders BOOLEAN DEFAULT TRUE,
+  email_stock BOOLEAN DEFAULT TRUE,
+  email_marketing BOOLEAN DEFAULT FALSE,
+  push_orders BOOLEAN DEFAULT TRUE,
+  push_messages BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS phone TEXT;
+
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+INSERT INTO public.notifications (type, title, message, read, user_id, created_at)
+SELECT
+  v.type,
+  v.title,
+  v.message,
+  v.read,
+  u.user_id,
+  v.created_at
+FROM (
+  VALUES
+    ('order'::notification_type,   'New order received',       'Order #2145 from Sarah Khan has been placed.', false, NOW() - INTERVAL '3 minutes'),
+    ('user'::notification_type,    'New customer message',     'From Ali Raza: Can you confirm delivery time for Karachi?', false, NOW() - INTERVAL '15 minutes'),
+    ('payment'::notification_type, 'Payment received',         'Payment of PKR 12,500 received for Order #2142.', false, NOW() - INTERVAL '1 hour'),
+    ('system'::notification_type,  'System maintenance notice','Scheduled maintenance tonight at 2:00 AM (UTC+5).', true,  NOW() - INTERVAL '4 hours'),
+    ('review'::notification_type,  'New product review',       'A 5-star review was added for "Wireless Headphones".', false, NOW() - INTERVAL '1 day')
+) AS v(type, title, message, read, created_at)
+CROSS JOIN LATERAL (SELECT auth.uid() AS user_id) u;
+DELETE FROM public.notifications
+WHERE message LIKE '%John Doe%'
+   OR message LIKE '%Alice Smith%'
+   OR (title = 'System update' AND message LIKE '%2 AM%');
+SELECT * FROM public.notifications;
+SELECT id, title, user_id, created_at
+FROM public.notifications
+ORDER BY created_at DESC;
+
+-- ---------------------------------------------------------------------------
+-- Storefront orders (logged-in buyers): run `migrations/storefront_orders.sql`
+-- after base schema. Adds orders.user_id, checkout_details, line snapshots on
+-- order_items, and customer-facing RLS (also merged into rls_policies.sql).
+-- ---------------------------------------------------------------------------

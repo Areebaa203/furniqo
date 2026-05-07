@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
+import { prepareCartForSignOut } from "@/lib/cart/prepareCartForSignOut";
 
 const LogoutModal = ({ isOpen, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -16,9 +17,11 @@ const LogoutModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const handleLogout = () => {
-    // Perform any logout logic here (e.g., clearing tokens)
+  const handleLogout = async () => {
+    await prepareCartForSignOut();
+    await fetch("/api/auth/signout", { method: "POST" });
     router.push("/");
+    onClose();
   };
 
   if (!isVisible && !isOpen) return null;

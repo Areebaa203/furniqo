@@ -38,7 +38,7 @@ export function galleryForPrimaryImage(primary) {
   return [primary, ...rest.slice(0, 2)].filter(Boolean).slice(0, 3);
 }
 
-function middleCategoryFromName(name) {
+export function middleCategoryFromName(name) {
   const n = name.toLowerCase();
   if (n.includes("table")) return "Tables";
   if (n.includes("sofa") || n.includes("couch")) return "Sofas";
@@ -47,15 +47,14 @@ function middleCategoryFromName(name) {
   return "Furniture";
 }
 
-function stockFromSlug(slug) {
-  /** Demo: one product wired as out-of-stock for PDP notify flow */
+export function stockFromSlug(slug) {
   if (slug === "fluted-sofa" || slug === "fluted-sofa-1") return 0;
   let h = 0;
-  for (let i = 0; i < slug.length; i += 1) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  const str = String(slug);
+  for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) >>> 0;
   return 8 + (h % 40);
 }
 
-/** Stock quantity used for storefront shop line items (matches PDP semantics). */
 export function getShopLineStockQty(slug) {
   return stockFromSlug(slug);
 }
@@ -101,6 +100,41 @@ export function buildPdpFromShop(p) {
     ],
     colorOptions: [
       { id: "cream", label: "Cream", thumb: p.image, swatch: "#e8ddd4" },
+      { id: "charcoal", label: "Charcoal", thumb: "/pick-2.png", swatch: "#3d4540" },
+    ],
+  };
+}
+
+export function buildPdpFromDb(p) {
+  return {
+    slug: p.id,
+    source: "db",
+    id: p.id,
+    name: p.name,
+    image: p.image_url,
+    gallery: galleryForPrimaryImage(p.image_url),
+    price: p.price,
+    compareAt: p.price * 1.2,
+    discount: 20,
+    reviews: Math.floor(Math.random() * 200),
+    stockQty: p.stock || stockFromSlug(p.id),
+    description: DESCRIPTION_FALLBACK,
+    materialBlurb:
+      "Frame: solid oak wood. Upholstery: high-performance 100% polyester blend. Assembly required — tools included.",
+    specs: [
+      { label: "Dimensions", value: "84\" W × 36\" D × 32\" H" },
+      { label: "Seat height", value: "18\"" },
+      { label: "Weight capacity", value: "750 lbs" },
+      { label: "Materials", value: "Solid oak frame, pocket springs, premium fabric" },
+      { label: "Assembly", value: "Moderate (2 people, ~45 min)" },
+    ],
+    breadcrumbs: [
+      { label: p.category || "Furniture", href: "/shop-all" },
+      { label: middleCategoryFromName(p.name), href: "/shop-all" },
+      { label: p.name, href: null },
+    ],
+    colorOptions: [
+      { id: "cream", label: "Cream", thumb: p.image_url, swatch: "#e8ddd4" },
       { id: "charcoal", label: "Charcoal", thumb: "/pick-2.png", swatch: "#3d4540" },
     ],
   };
@@ -177,7 +211,7 @@ export function buildPdpFromDeal(p) {
   };
 }
 
-export function resolveStorefrontProduct(slug) {
+export function resolveStorefrontProductSync(slug) {
   const shop = ALL_SHOP_PRODUCTS.find((x) => x.slug === slug);
   if (shop) return buildPdpFromShop(shop);
 

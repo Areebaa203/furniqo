@@ -1,4 +1,4 @@
-import CheckoutView from "@/components/checkout/CheckoutView";
+import CheckoutReviewView from "@/components/checkout/CheckoutReviewView";
 
 export const metadata = {
   title: "Checkout · Furniqo",
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function CheckoutPage() {
-  return <CheckoutView />;
+  return <CheckoutReviewView />;
 }

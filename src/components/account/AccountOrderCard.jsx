@@ -19,7 +19,8 @@ function flattenLines(lines) {
   return out;
 }
 
-function OrderImageGrid({ lines }) {
+/** Cart lines and saved order lines share the fields used for thumbnails. */
+export function AccountOrderImageGrid({ lines }) {
   const flat = flattenLines(lines);
   const overflow = Math.max(0, flat.length - 3);
 
@@ -123,7 +124,7 @@ export default function AccountOrderCard({ order, onPaid, onCancelled, onBuyAgai
       <div className="p-3 sm:p-4">
         <div className="overflow-hidden rounded-md border border-[#ebe6df] bg-white">
           <div className="p-1.5 sm:p-2" style={{ backgroundColor: LINE_BG }}>
-            <OrderImageGrid lines={order.lines} />
+            <AccountOrderImageGrid lines={order.lines} />
           </div>
         </div>
 
@@ -136,6 +137,12 @@ export default function AccountOrderCard({ order, onPaid, onCancelled, onBuyAgai
         </div>
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Link
+            href={`/checkout/confirmation?orderId=${encodeURIComponent(order.id)}`}
+            className="font-home-sub inline-flex h-11 w-full items-center justify-center rounded-md border border-[#d8d2c8] bg-white text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a3021] transition hover:bg-[#faf8f5] sm:w-auto sm:min-w-[10rem]"
+          >
+            View details
+          </Link>
           {needsPay ? (
             <>
               <button

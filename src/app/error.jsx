@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CartProvider } from "@/contexts/CartContext";
+import ReduxProvider from "@/store/ReduxProvider";
 import SiteHeader from "@/components/home/SiteHeader";
 import SiteFooter from "@/components/home/SiteFooter";
 import StorefrontErrorView from "@/components/errors/StorefrontErrorView";
@@ -29,12 +29,12 @@ export default function RootError({ error: _error, reset }) {
   }
 
   return (
-    <CartProvider>
+    <ReduxProvider>
       <div className="min-h-screen bg-[#F9F7F2] font-home-body antialiased">
         <SiteHeader />
         <StorefrontErrorView reset={reset} />
         <SiteFooter />
       </div>
-    </CartProvider>
+    </ReduxProvider>
   );
 }

@@ -1,79 +1,123 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { profileSchema } from "@/lib/validations/settings";
+import Link from "next/link";
+import AccountEditProfileModal from "./AccountEditProfileModal";
+import AccountChangePasswordModal from "./AccountChangePasswordModal";
+import AccountForgotPasswordModal from "./AccountForgotPasswordModal";
+import AccountAddAddressModal from "./AccountAddAddressModal";
+import AccountEditAddressModal from "./AccountEditAddressModal";
 
-const GREEN = "#26362e";
 const BORDER = "#d4d0c6";
 
 export default function AccountProfileSettings() {
-  const [status, setStatus] = useState({ loading: true, error: "", saved: false });
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(profileSchema),
-    defaultValues: { fullName: "", avatarUrl: "", phone: "" },
+  const [profile, setProfile] = useState({
+    fullName: "John Doe",
+    email: "johndoe@example.com",
+    phone: "+1 222-333-4444",
+    loading: true,
   });
 
+  const [addresses, setAddresses] = useState([
+    {
+      id: "1",
+      isDefault: true,
+      firstName: "John",
+      lastName: "Doe",
+      address: "206 Batran's Street, 39",
+      apartment: "",
+      zipCode: "2044",
+      city: "Ottawa",
+      state: "Ontario",
+      country: "Canada",
+    },
+    {
+      id: "2",
+      isDefault: false,
+      firstName: "John",
+      lastName: "Doe",
+      address: "206 Batran's Street, 39",
+      apartment: "",
+      zipCode: "2044",
+      city: "Ottawa",
+      state: "Ontario",
+      country: "Canada",
+    },
+  ]);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
+  const [isEditAddressModalOpen, setIsEditAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+
   useEffect(() => {
-    let cancelled = false;
     (async () => {
       try {
         const res = await fetch("/api/settings/profile");
         const json = await res.json();
-        if (cancelled) return;
-        if (!json.success) {
-          setStatus((s) => ({
-            ...s,
+        if (json.success && json.data) {
+          setProfile({
+            fullName: json.data.full_name || "John Doe",
+            email: json.data.email || "johndoe@example.com",
+            phone: json.data.phone || "+1 222-333-4444",
             loading: false,
-            error: json.message || "Could not load profile.",
-          }));
-          return;
+          });
+        } else {
+          setProfile((s) => ({ ...s, loading: false }));
         }
-        const d = json.data || {};
-        reset({
-          fullName: d.full_name ?? "",
-          avatarUrl: d.avatar_url ?? "",
-          phone: d.phone ?? "",
-        });
-        setStatus((s) => ({ ...s, loading: false }));
       } catch {
-        if (!cancelled) {
-          setStatus((s) => ({ ...s, loading: false, error: "Could not load profile." }));
-        }
+        setProfile((s) => ({ ...s, loading: false }));
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [reset]);
+  }, []);
 
-  const onSubmit = async (data) => {
-    setStatus((s) => ({ ...s, error: "", saved: false }));
-    const res = await fetch("/api/settings/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
-    if (!json.success) {
-      setStatus((s) => ({
-        ...s,
-        error: json.message || json.errors?.fieldErrors?.fullName?.[0] || "Update failed.",
-      }));
-      return;
+  const handleSaveProfile = async (updatedProfile) => {
+    // Optimistically update UI
+    setProfile({ ...updatedProfile, loading: false });
+
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: updatedProfile.fullName,
+          phone: updatedProfile.phone,
+          // avatarUrl is currently not in the UI but the API expects it or we can omit it if not changed
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        console.error("Failed to save profile:", json.message);
+        // Rollback or show error toast could go here
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
     }
-    setStatus((s) => ({ ...s, saved: true }));
   };
 
-  if (status.loading) {
+  const handleEditAddress = (address) => {
+    setEditingAddress(address);
+    setIsEditAddressModalOpen(true);
+  };
+
+  const handleSaveAddress = async (addressData) => {
+    // This will be implemented when the address API is ready
+    console.log("Saving address:", addressData);
+    if (editingAddress) {
+      setAddresses(addresses.map(a => a.id === editingAddress.id ? { ...a, ...addressData } : a));
+    }
+  };
+
+  const handleAddAddress = async (addressData) => {
+    // This will be implemented when the address API is ready
+    console.log("Adding address:", addressData);
+    setAddresses([...addresses, { ...addressData, id: Math.random().toString() }]);
+  };
+
+  if (profile.loading) {
     return (
       <div className="flex items-center gap-2 py-16 text-[#555555]">
         <Icon icon="mingcute:loading-fill" className="size-6 animate-spin" aria-hidden />
@@ -83,102 +127,147 @@ export default function AccountProfileSettings() {
   }
 
   return (
-    <section aria-labelledby="account-profile-heading">
+    <section className="max-w-4xl" aria-labelledby="profile-settings-heading">
       <h2
-        id="account-profile-heading"
-        className="font-home-body text-base font-semibold text-[#1a251f]"
+        id="profile-settings-heading"
+        className="font-home-body text-lg font-bold text-[#1a251f] sm:text-xl"
       >
         Profile settings
       </h2>
 
-      <p className="font-home-body mt-2 max-w-lg text-sm leading-relaxed text-[#555555]">
-        Update the details we use for orders and support. To change your password, use{" "}
-        <a
-          href="/forgot-password"
-          className="font-medium text-[#1a251f] underline underline-offset-2"
+      <div className="mt-8 space-y-6">
+        {/* Profile Info Card */}
+        <div 
+          className="rounded-sm border bg-[#FFFDF4] p-6 sm:p-8"
+          style={{ borderColor: BORDER }}
         >
-          forgot password
-        </a>
-        .
-      </p>
+          <div className="flex items-center gap-3">
+            <h3 className="font-home-body text-lg font-bold text-[#1a251f]">
+              {profile.fullName}
+            </h3>
+            <button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1 text-sm font-medium text-[#4a524a] transition hover:text-[#1a251f]"
+            >
+              <Icon icon="mingcute:edit-2-line" className="size-4" />
+              <span>Edit</span>
+            </button>
+          </div>
 
-      {status.error ? (
-        <div className="mt-6 flex items-center gap-2 rounded-md border border-red-200 bg-red-50/90 px-3 py-2.5 text-sm text-red-800">
-          <Icon icon="mingcute:warning-line" className="size-5 shrink-0" aria-hidden />
-          {status.error}
-        </div>
-      ) : null}
+          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div className="space-y-4">
+              <div>
+                <p className="font-home-body text-[13px] text-[#777777]">Email & password</p>
+                <p className="mt-1 font-home-body text-[15px] font-medium text-[#1a251f]">
+                  {profile.email}
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="flex items-center gap-1.5 text-[14px] font-medium text-[#4a524a] transition hover:text-[#1a251f]"
+              >
+                <Icon icon="mingcute:edit-2-line" className="size-3.5" />
+                <span>Change password</span>
+              </button>
+            </div>
 
-      {status.saved ? (
-        <p className="mt-6 text-sm font-medium text-emerald-800">Your profile was saved.</p>
-      ) : null}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 max-w-md space-y-5">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="account-full-name"
-            className="font-home-body text-sm font-medium text-[#1a251f]"
-          >
-            Full name
-          </label>
-          <input
-            id="account-full-name"
-            {...register("fullName")}
-            className="font-home-body w-full rounded-md border bg-white px-4 py-3 text-[15px] text-[#1a251f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#1a3021]/20"
-            style={{ borderColor: BORDER }}
-          />
-          {errors.fullName ? (
-            <p className="text-xs text-red-600">{errors.fullName.message}</p>
-          ) : null}
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="account-phone" className="font-home-body text-sm font-medium text-[#1a251f]">
-            Phone
-          </label>
-          <input
-            id="account-phone"
-            {...register("phone")}
-            type="tel"
-            className="font-home-body w-full rounded-md border bg-white px-4 py-3 text-[15px] text-[#1a251f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#1a3021]/20"
-            style={{ borderColor: BORDER }}
-          />
-          {errors.phone ? <p className="text-xs text-red-600">{errors.phone.message}</p> : null}
+            <div>
+              <p className="font-home-body text-[13px] text-[#777777]">Phone number</p>
+              <p className="mt-1 font-home-body text-[15px] font-medium text-[#1a251f]">
+                {profile.phone}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="account-avatar" className="font-home-body text-sm font-medium text-[#1a251f]">
-            Avatar URL <span className="font-normal text-[#777777]">(optional)</span>
-          </label>
-          <input
-            id="account-avatar"
-            {...register("avatarUrl")}
-            type="url"
-            placeholder="https://"
-            className="font-home-body w-full rounded-md border bg-white px-4 py-3 text-[15px] text-[#1a251f] outline-none transition focus-visible:ring-2 focus-visible:ring-[#1a3021]/20"
-            style={{ borderColor: BORDER }}
-          />
-          {errors.avatarUrl ? (
-            <p className="text-xs text-red-600">{errors.avatarUrl.message}</p>
-          ) : null}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="font-home-sub mt-2 inline-flex min-h-[3rem] w-full items-center justify-center rounded-lg px-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:opacity-92 disabled:opacity-60 sm:w-auto sm:min-w-[11rem]"
-          style={{ backgroundColor: GREEN }}
+        {/* Address Card */}
+        <div 
+          className="rounded-sm border bg-[#FFFDF4] p-6 sm:p-8"
+          style={{ borderColor: BORDER }}
         >
-          {isSubmitting ? (
-            <span className="inline-flex items-center gap-2">
-              <Icon icon="mingcute:loading-fill" className="size-5 animate-spin" />
-              Saving…
-            </span>
-          ) : (
-            "Save changes"
-          )}
-        </button>
-      </form>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h3 className="font-home-body text-lg font-bold text-[#1a251f]">Address</h3>
+              <button 
+                onClick={() => setIsAddAddressModalOpen(true)}
+                className="flex items-center gap-1 text-sm font-medium text-[#4a524a] transition hover:text-[#1a251f]"
+              >
+                <Icon icon="mingcute:add-line" className="size-4" />
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2">
+            {addresses.map((addr, idx) => (
+              <div key={addr.id} className={idx > 0 ? "hidden sm:block" : ""}>
+                <p className="font-home-body text-[13px] text-[#777777]">
+                  {addr.isDefault ? "Default address" : "Secondary address"}
+                </p>
+                <div className="mt-3 space-y-0.5 font-home-body text-[15px] text-[#1a251f]">
+                  <p className="font-medium">{addr.firstName} {addr.lastName}</p>
+                  <p>{addr.state}, {addr.city}, {addr.zipCode}</p>
+                  <p>{addr.address}</p>
+                  <p>{addr.country}</p>
+                </div>
+                <button 
+                  onClick={() => handleEditAddress(addr)}
+                  className="mt-4 flex items-center gap-1.5 text-[14px] font-medium text-[#4a524a] transition hover:text-[#1a251f]"
+                >
+                  <Icon icon="mingcute:edit-2-line" className="size-3.5" />
+                  <span>Edit</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <footer className="mt-12 flex flex-wrap gap-x-6 gap-y-2 border-t pt-6" style={{ borderColor: BORDER }}>
+        <Link href="/privacy" className="text-[13px] text-[#4a524a] underline underline-offset-4 hover:text-[#1a251f]">
+          Privacy policy
+        </Link>
+        <Link href="/terms" className="text-[13px] text-[#4a524a] underline underline-offset-4 hover:text-[#1a251f]">
+          Terms of service
+        </Link>
+      </footer>
+
+      <AccountEditProfileModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        profile={profile}
+        onSave={handleSaveProfile}
+      />
+
+      <AccountChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onForgotClick={() => {
+          setIsPasswordModalOpen(false);
+          setIsForgotModalOpen(true);
+        }}
+      />
+
+      <AccountForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+        email={profile.email}
+      />
+
+      <AccountAddAddressModal
+        isOpen={isAddAddressModalOpen}
+        onClose={() => setIsAddAddressModalOpen(false)}
+        onSave={handleAddAddress}
+      />
+
+      <AccountEditAddressModal
+        isOpen={isEditAddressModalOpen}
+        onClose={() => setIsEditAddressModalOpen(false)}
+        address={editingAddress}
+        onSave={handleSaveAddress}
+      />
     </section>
   );
 }
+
+

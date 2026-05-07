@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { DEAL_PROMO } from "@/components/home/dealsOfTheWeekData";
 import {
-  ALL_SHOP_PRODUCTS,
   COLOR_OPTIONS,
   PRICE_MAX,
   PRICE_MIN,
@@ -229,6 +229,13 @@ export default function ShopAllView() {
   const [priceMin, setPriceMin] = useState(PRICE_MIN);
   const [priceMax, setPriceMax] = useState(PRICE_MAX);
 
+  const [products, setProducts] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
   const [roomOpen, setRoomOpen] = useState(true);
   const [typeOpen, setTypeOpen] = useState(true);
   const [colorOpen, setColorOpen] = useState(true);
@@ -238,6 +245,8 @@ export default function ShopAllView() {
   const [roomExpanded, setRoomExpanded] = useState(false);
   const [typeExpanded, setTypeExpanded] = useState(false);
   const [colorExpanded, setColorExpanded] = useState(false);
+
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (filtersOpen && !isLgUp) {
@@ -249,6 +258,23 @@ export default function ShopAllView() {
       document.documentElement.style.overflow = "";
     };
   }, [filtersOpen, isLgUp]);
+
+  useEffect(() => {
+    const room = searchParams.get("room");
+    const type = searchParams.get("type");
+
+    if (room) {
+      setSelectedRooms(new Set([room]));
+    } else if (searchParams.toString() === "" || (!searchParams.has("room") && !searchParams.has("type"))) {
+      setSelectedRooms(new Set());
+    }
+
+    if (type) {
+      setSelectedTypes(new Set([type]));
+    } else if (searchParams.toString() === "" || (!searchParams.has("room") && !searchParams.has("type"))) {
+      setSelectedTypes(new Set());
+    }
+  }, [searchParams]);
 
   const toggleRoom = useCallback((id) => {
     setSelectedRooms((prev) => {
@@ -282,6 +308,68 @@ export default function ShopAllView() {
     return n;
   }, [selectedRooms, selectedTypes, selectedColors, minReview, priceMin, priceMax]);
 
+  const fetchProducts = useCallback(async (currentPage, isAppend = false) => {
+    try {
+      if (isAppend) setIsFetchingMore(true);
+      else setLoading(true);
+
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: "12",
+        sort: sortId,
+        priceMin: priceMin.toString(),
+        priceMax: priceMax.toString(),
+      });
+
+      if (selectedRooms.size > 0) {
+        params.append("category", Array.from(selectedRooms).join(","));
+      }
+
+      const res = await fetch(`/api/storefront/products?${params.toString()}`);
+      const json = await res.json();
+
+      if (json.success) {
+        const newProducts = json.data.products.map(p => ({
+          ...p,
+          slug: p.id, // Fallback to id if slug is missing
+          image: p.image_url,
+          discount: Math.round(((p.price * 1.2 - p.price) / (p.price * 1.2)) * 100), // Fake discount
+          compareAt: p.price * 1.2, // Fake compareAt
+          reviews: Math.floor(Math.random() * 200), // Fake reviews
+          ratingAvg: 4 + Math.random(), // Fake rating
+          room: p.category,
+          productType: p.category, // Map both to category for now
+        }));
+
+        if (isAppend) {
+          setProducts((prev) => [...prev, ...newProducts]);
+        } else {
+          setProducts(newProducts);
+        }
+
+        setTotalCount(json.data.totalCount);
+        setHasMore(newProducts.length === 12);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+      setIsFetchingMore(false);
+    }
+  }, [selectedRooms, sortId, priceMin, priceMax]);
+
+  useEffect(() => {
+    setPage(1);
+    fetchProducts(1, false);
+  }, [selectedRooms, sortId, priceMin, priceMax, fetchProducts]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || isFetchingMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, true);
+  }, [hasMore, isFetchingMore, page, fetchProducts]);
+
   const resetAll = useCallback(() => {
     setSelectedRooms(new Set());
     setSelectedTypes(new Set());
@@ -291,31 +379,7 @@ export default function ShopAllView() {
     setPriceMax(PRICE_MAX);
   }, []);
 
-  const filteredSorted = useMemo(() => {
-    let list = ALL_SHOP_PRODUCTS.filter((p) => {
-      if (selectedRooms.size && !selectedRooms.has(p.room)) return false;
-      if (selectedTypes.size && !selectedTypes.has(p.productType)) return false;
-      if (selectedColors.size && !selectedColors.has(p.color)) return false;
-      if (minReview !== "any") {
-        if (minReview === "none") {
-          if (p.reviews > 0) return false;
-        } else {
-          const threshold = Number(minReview);
-          if ((p.ratingAvg ?? 0) < threshold) return false;
-        }
-      }
-      if (p.price < priceMin || p.price > priceMax) return false;
-      return true;
-    });
-
-    list = [...list];
-    if (sortId === "best") {
-      list.sort((a, b) => b.reviews * (b.ratingAvg || 1) - a.reviews * (a.ratingAvg || 1));
-    } else if (sortId === "price-asc") list.sort((a, b) => a.price - b.price);
-    else if (sortId === "price-desc") list.sort((a, b) => b.price - a.price);
-    else if (sortId === "reviews") list.sort((a, b) => b.reviews - a.reviews);
-    return list;
-  }, [selectedRooms, selectedTypes, selectedColors, minReview, priceMin, priceMax, sortId]);
+  const filteredSorted = products;
 
   const gridItems = useMemo(() => {
     const list = filteredSorted;
@@ -515,7 +579,7 @@ export default function ShopAllView() {
               Reset all
             </button>
           ) : null}
-          <span className="text-sm text-[#566157]">{filteredSorted.length} results</span>
+          <span className="text-sm text-[#566157]">{totalCount} results</span>
         </div>
 
         <div className="flex w-full flex-col gap-1 sm:w-auto sm:min-w-[200px]">
@@ -568,7 +632,12 @@ export default function ShopAllView() {
         ) : null}
 
         <section className={cn("min-w-0 flex-1", filtersOpen ? "lg:max-w-none" : "w-full")}>
-          {filteredSorted.length === 0 ? (
+          {loading && products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Icon icon="line-md:loading-twotone-loop" className="size-10 text-[#1a3021]" />
+              <p className="mt-4 text-sm text-neutral-500">Loading products...</p>
+            </div>
+          ) : filteredSorted.length === 0 ? (
             <p className="rounded-sm border border-dashed border-[#d6d0c5] bg-[#f4f1ea]/80 px-6 py-16 text-center text-sm text-neutral-600">
               No products match these filters.&nbsp;
               <button type="button" className="font-semibold text-[#1a3021] underline" onClick={resetAll}>
@@ -596,13 +665,15 @@ export default function ShopAllView() {
             </ul>
           )}
 
-          {filteredSorted.length > 0 ? (
+          {hasMore ? (
             <div className="mt-8 flex justify-center">
               <button
                 type="button"
-                className="font-home-sub inline-flex items-center justify-center rounded-sm border border-[#d6d0c5] bg-[#f8f4ec] px-8 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a3021] hover:bg-[#efe8dc]"
+                onClick={loadMore}
+                disabled={isFetchingMore}
+                className="font-home-sub inline-flex items-center justify-center rounded-sm border border-[#d6d0c5] bg-[#f8f4ec] px-8 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a3021] hover:bg-[#efe8dc] disabled:opacity-50"
               >
-                Show more
+                {isFetchingMore ? "Loading..." : "Show more"}
               </button>
             </div>
           ) : null}

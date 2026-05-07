@@ -4,39 +4,37 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { resolveSupabaseUserId } from "@/utils/supabase/resolveUserId";
 import { useCart } from "@/contexts/CartContext";
-import {
-  loadOrdersForUser,
-  patchOrderForUser,
-  removeOrderForUser,
-} from "@/lib/account/localOrders";
 import AccountOrderCard from "@/components/account/AccountOrderCard";
+import AccountCartCheckoutCard from "@/components/account/AccountCartCheckoutCard";
 import { AccountOrdersEmpty } from "@/components/account/AccountOrdersEmpty";
 
-async function resolveSupabaseUserId(supabase) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (session?.user?.id) return session.user.id;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
+async function fetchOrdersFromApi() {
+  const res = await fetch("/api/account/orders", { cache: "no-store" });
+  const json = await res.json();
+  if (!json.success) return [];
+  return Array.isArray(json.data) ? json.data : [];
 }
 
 export default function AccountOrdersView({ serverUserId = null }) {
   const router = useRouter();
-  const { addItem } = useCart();
+  const { addItem, items: cartItems, subtotal: cartSubtotal, totalQty: cartQty } = useCart();
   const [userId, setUserId] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback((uid) => {
+  const refresh = useCallback(async (uid) => {
     if (!uid) {
       setOrders([]);
       return;
     }
-    setOrders(loadOrdersForUser(uid));
+    try {
+      const list = await fetchOrdersFromApi();
+      setOrders(list);
+    } catch {
+      setOrders([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -44,20 +42,20 @@ export default function AccountOrdersView({ serverUserId = null }) {
     const supabase = createClient();
 
     const syncOrders = async () => {
-      let uid = await resolveSupabaseUserId(supabase);
-      if (!uid && serverUserId) uid = serverUserId;
+      const resolved = await resolveSupabaseUserId(supabase);
+      const uid = resolved ?? serverUserId ?? null;
       if (cancelled) return;
       setUserId(uid);
-      refresh(uid);
+      await refresh(uid);
       setLoading(false);
     };
 
-    syncOrders();
+    void syncOrders();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      syncOrders();
+      void syncOrders();
     });
 
     return () => {
@@ -66,46 +64,35 @@ export default function AccountOrdersView({ serverUserId = null }) {
     };
   }, [refresh, serverUserId]);
 
-  useEffect(() => {
-    const reloadFromStorage = () => {
-      void (async () => {
-        const supabase = createClient();
-        let uid = await resolveSupabaseUserId(supabase);
-        if (!uid && serverUserId) uid = serverUserId;
-        setUserId(uid);
-        refresh(uid);
-      })();
-    };
-
-    const onStorage = (e) => {
-      if (e.key === "furniqo-account-orders-v1") reloadFromStorage();
-    };
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("furniqo-account-orders-changed", reloadFromStorage);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("furniqo-account-orders-changed", reloadFromStorage);
-    };
-  }, [refresh, serverUserId]);
-
   const handlePaid = useCallback(
-    (orderId) => {
+    async (orderId) => {
       if (!userId) return;
-      patchOrderForUser(userId, orderId, {
-        paymentStatus: "paid",
-        fulfillmentStatus: Math.random() > 0.5 ? "delivered" : "shipped",
-      });
-      refresh(userId);
+      try {
+        const res = await fetch(`/api/account/orders/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markPaid: true }),
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setOrders((prev) => prev.map((o) => (o.id === orderId ? json.data : o)));
+        }
+      } catch {
+        /* ignore */
+      }
     },
-    [userId, refresh]
+    [userId]
   );
 
   const handleCancelled = useCallback(
-    (orderId) => {
+    async (orderId) => {
       if (!userId) return;
-      removeOrderForUser(userId, orderId);
-      refresh(userId);
+      try {
+        await fetch(`/api/account/orders/${orderId}`, { method: "DELETE" });
+        await refresh(userId);
+      } catch {
+        /* ignore */
+      }
     },
     [userId, refresh]
   );
@@ -136,8 +123,22 @@ export default function AccountOrdersView({ serverUserId = null }) {
     );
   }
 
-  if (!orders.length) {
+  if (!orders.length && cartQty < 1) {
     return <AccountOrdersEmpty />;
+  }
+
+  if (!orders.length && cartQty > 0) {
+    return (
+      <div>
+        <h2 className="font-home-heading text-lg font-normal text-[#1a3021] sm:text-xl">Orders</h2>
+        <p className="mt-2 max-w-xl font-home-body text-sm leading-relaxed text-neutral-600">
+          Your bag has items — finish checkout to see them here as an order. Cart items are not orders until you confirm.
+        </p>
+        <div className="mt-8">
+          <AccountCartCheckoutCard items={cartItems} totalQty={cartQty} subtotal={cartSubtotal} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -155,6 +156,20 @@ export default function AccountOrdersView({ serverUserId = null }) {
           />
         ))}
       </div>
+
+      {cartQty > 0 ? (
+        <section className="mt-12 border-t border-[#ebe6df] pt-10" aria-labelledby="cart-pending-heading">
+          <h2 id="cart-pending-heading" className="font-home-heading text-base font-normal text-[#1a251f]">
+            In your cart
+          </h2>
+          <p className="mt-1 font-home-body text-sm text-neutral-600">
+            These items are not in your order history until you complete checkout.
+          </p>
+          <div className="mt-6">
+            <AccountCartCheckoutCard items={cartItems} totalQty={cartQty} subtotal={cartSubtotal} />
+          </div>
+        </section>
+      ) : null}
 
       <nav className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-[#ebe6df] pt-8 font-home-body text-[11px] text-neutral-500">
         <Link href="/faq" className="underline underline-offset-2 hover:text-neutral-800">

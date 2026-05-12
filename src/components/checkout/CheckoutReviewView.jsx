@@ -338,8 +338,7 @@ export default function CheckoutReviewView() {
 
       /** Explicit opt-out only: normal checkout, including live production, goes through Stripe before confirmation. */
       if (!shouldUseStripeHostedCheckout() && uid) {
-        clearCart();
-        router.push(`/checkout/confirmation?orderId=${encodeURIComponent(order.id)}`);
+        router.push(`/checkout/confirmation?orderId=${encodeURIComponent(order.id)}&clearCart=1`);
         return;
       }
 
@@ -362,7 +361,6 @@ export default function CheckoutReviewView() {
         throw new Error(apiError || "Failed to initialize payment");
       }
 
-      clearCart();
       // Redirect to Stripe Hosted Checkout
       window.location.href = url;
     } catch (err) {

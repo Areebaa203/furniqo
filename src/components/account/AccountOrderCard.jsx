@@ -35,7 +35,7 @@ export function AccountOrderImageGrid({ lines }) {
   if (flat.length === 1) {
     const line = flat[0];
     return (
-      <div className="relative aspect-[5/3] w-full overflow-hidden rounded-sm bg-[#ece7de]">
+      <div className="relative h-[160px] w-full overflow-hidden rounded-sm bg-[#ece7de] sm:h-[200px]">
         <Image src={line.image} alt={line.name} fill className="object-cover" sizes="(max-width:768px) 100vw, 400px" />
       </div>
     );
@@ -43,9 +43,9 @@ export function AccountOrderImageGrid({ lines }) {
 
   if (flat.length === 2) {
     return (
-      <div className="grid min-h-[140px] grid-cols-2 gap-1 sm:min-h-[168px]">
+      <div className="grid min-h-[160px] grid-cols-2 gap-1 sm:min-h-[200px]">
         {flat.map((line, i) => (
-          <div key={`${line.slug}-${i}`} className="relative min-h-[120px] overflow-hidden rounded-sm bg-[#ece7de]">
+          <div key={`${line.slug}-${i}`} className="relative h-full overflow-hidden rounded-sm bg-[#ece7de]">
             <Image src={line.image} alt={line.name} fill className="object-cover" sizes="200px" />
           </div>
         ))}
@@ -54,14 +54,14 @@ export function AccountOrderImageGrid({ lines }) {
   }
 
   return (
-    <div className="grid min-h-[160px] grid-cols-2 grid-rows-2 gap-1 sm:min-h-[200px]">
+    <div className="grid h-[160px] grid-cols-2 grid-rows-2 gap-1 sm:h-[200px]">
       <div className="relative row-span-2 overflow-hidden rounded-sm bg-[#ece7de]">
         <Image src={flat[0].image} alt={flat[0].name} fill className="object-cover" sizes="(max-width:768px) 50vw, 240px" />
       </div>
-      <div className="relative min-h-[76px] overflow-hidden rounded-sm bg-[#ece7de] sm:min-h-[96px]">
+      <div className="relative h-full overflow-hidden rounded-sm bg-[#ece7de]">
         <Image src={flat[1].image} alt={flat[1].name} fill className="object-cover" sizes="200px" />
       </div>
-      <div className="relative flex min-h-[76px] items-center justify-center overflow-hidden rounded-sm bg-[#ece7de] sm:min-h-[96px]">
+      <div className="relative flex h-full items-center justify-center overflow-hidden rounded-sm bg-[#ece7de]">
         {overflow > 0 ? (
           <span className="font-home-body text-[13px] font-semibold tabular-nums text-[#1a3021]">
             +{overflow} products
@@ -104,12 +104,12 @@ export default function AccountOrderCard({ order, onPaid, onCancelled, onBuyAgai
   const showBuyAgain = !needsPay;
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border border-[#e3ddd4] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+    <article className="flex h-full flex-col overflow-hidden rounded-lg border border-[#e3ddd4] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
       <div
-        className="flex items-start gap-2 border-b border-[#ebe6df] px-3 py-2.5 sm:px-4 sm:py-3"
+        className="flex min-h-[58px] items-center gap-2 border-b border-[#ebe6df] px-3 py-2 sm:min-h-[68px] sm:px-4"
         style={{ backgroundColor: BAR_BG }}
       >
-        <Icon icon={meta.icon} className="mt-0.5 size-5 shrink-0 text-[#1a3021]" aria-hidden />
+        <Icon icon={meta.icon} className="size-5 shrink-0 text-[#1a3021]" aria-hidden />
         <div className="min-w-0">
           <p className="font-home-body text-[13px] font-semibold leading-tight text-[#1a3021] sm:text-sm">
             {meta.title}
@@ -121,7 +121,7 @@ export default function AccountOrderCard({ order, onPaid, onCancelled, onBuyAgai
         </div>
       </div>
 
-      <div className="p-3 sm:p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="overflow-hidden rounded-md border border-[#ebe6df] bg-white">
           <div className="p-1.5 sm:p-2" style={{ backgroundColor: LINE_BG }}>
             <AccountOrderImageGrid lines={order.lines} />
@@ -136,7 +136,7 @@ export default function AccountOrderCard({ order, onPaid, onCancelled, onBuyAgai
           <p className="text-base font-semibold tabular-nums text-[#1a3021]">${order.total.toFixed(2)}</p>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="mt-auto pt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Link
             href={`/checkout/confirmation?orderId=${encodeURIComponent(order.id)}`}
             className="font-home-sub inline-flex h-11 w-full items-center justify-center rounded-md border border-[#d8d2c8] bg-white text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a3021] transition hover:bg-[#faf8f5] sm:w-auto sm:min-w-[10rem]"

@@ -56,12 +56,19 @@ export default function CheckoutConfirmationView() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const sessionId = searchParams.get("session_id");
-  const { addItem } = useCart();
+  const clearCartParam = searchParams.get("clearCart");
+  const { addItem, clearCart } = useCart();
 
   const [order, setOrder] = React.useState(null);
   const [userId, setUserId] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState("");
+
+  React.useEffect(() => {
+    if (clearCartParam === "1" || sessionId?.trim()) {
+      clearCart();
+    }
+  }, [clearCartParam, sessionId, clearCart]);
 
   React.useEffect(() => {
     let cancelled = false;

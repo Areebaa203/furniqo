@@ -7,7 +7,7 @@ export const JOURNAL_POSTS = [
     excerpt:
       "Limited space doesn't mean limited style. See how to use mirrors, lighting, and smart furniture placement…",
     image: "/sofa-beds-img.jpg",
-    href: "#",
+    href: "/journal/small-living-room",
   },
   {
     id: "choose-sofa",
@@ -17,7 +17,7 @@ export const JOURNAL_POSTS = [
     excerpt:
       "Picking a sofa is a big decision. We break down measurements, fabric types, and styles to help you find the perfect fit…",
     image: "/arm-chair-img.jpg",
-    href: "#",
+    href: "/journal/choose-sofa",
   },
   {
     id: "wood-tones",
@@ -27,7 +27,7 @@ export const JOURNAL_POSTS = [
     excerpt:
       "Worried about matching your furniture? Here's how to confidently combine different wood finishes…",
     image: "/dining-table-img.jpg",
-    href: "#",
+    href: "/journal/wood-tones",
   },
   {
     id: "bedroom-calm",
@@ -37,6 +37,6 @@ export const JOURNAL_POSTS = [
     excerpt:
       "Soft layers, the right lighting, and a few swaps can transform how your bedroom feels—without a full remodel…",
     image: "/bedroom-img.jpg",
-    href: "#",
+    href: "/journal/bedroom-calm",
   },
 ];

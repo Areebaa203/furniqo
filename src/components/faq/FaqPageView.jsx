@@ -165,14 +165,14 @@ export default function FaqPageView() {
               {FAQ_CONTACT.phone}
             </p>
             <p className="mt-2 font-home-body text-sm text-[#555555]">{FAQ_CONTACT.phoneHours}</p>
-            <Link
-              href={FAQ_CONTACT.phoneHref}
+            <button
+              type="button"
               className="font-home-sub mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:opacity-92 sm:w-auto sm:self-start sm:px-10"
               style={{ backgroundColor: GREEN }}
             >
               Call us
               <Icon icon="mingcute:phone-line" className="size-4" aria-hidden />
-            </Link>
+            </button>
           </div>
 
           <div

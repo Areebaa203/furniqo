@@ -9,8 +9,8 @@ export const FOOTER_SHOP_LINKS = [
 ];
 
 export const FOOTER_INFO_LINKS = [
-  { label: "Journal", href: "#" },
-  { label: "About", href: "#" },
+  { label: "Journal", href: "/journal" },
+  { label: "About", href: "/about" },
   { label: "FAQ", href: "/faq" },
   { label: "Contact", href: "/contact" },
   { label: "Login", href: "/login" },

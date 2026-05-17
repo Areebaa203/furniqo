@@ -139,7 +139,7 @@ export default function HomeTestimonialSpotlightSection() {
               />
             </div>
 
-            <div className="absolute bottom-3 left-3 z-10 max-w-[min(100%,19rem)] rounded-sm border border-neutral-200/90 bg-white p-3 shadow-md sm:bottom-4 sm:left-4 sm:max-w-[20rem] sm:p-4 lg:bottom-4 lg:left-4">
+            <div className="absolute bottom-3 left-3 z-10 max-w-[min(100%,19rem)] rounded-sm border border-neutral-200/90 bg-white p-3 shadow-md sm:bottom-4 sm:left-4 sm:max-w-[20rem] sm:p-4 lg:bottom-[20rem] lg:left-4">
               <div className="flex gap-3 sm:gap-4">
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm bg-[#f2efe8] sm:h-16 sm:w-16">
                   <Image

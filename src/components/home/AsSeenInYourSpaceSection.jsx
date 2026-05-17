@@ -39,19 +39,18 @@ function ReviewCard({ item, variant = "grid" }) {
         carousel && "w-[min(78vw,18rem)] shrink-0 sm:w-[min(240px,40vw)]"
       )}
     >
-      <Link
-        href="/shop-all"
+      <div
         className="group relative block aspect-[3/4] w-full overflow-hidden rounded-xl bg-[#e5e0d8] lg:aspect-[4/5] lg:rounded-sm"
       >
         <Image
           src={item.image}
           alt=""
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          className="object-cover transition-transform duration-300"
           sizes="(max-width: 768px) 78vw, 280px"
         />
         <span
-          className="absolute inset-0 flex items-center justify-center bg-black/10 transition group-hover:bg-black/15"
+          className="absolute inset-0 flex items-center justify-center bg-black/10"
           aria-hidden
         />
         <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/90 bg-white/10 backdrop-blur-[1px] sm:h-14 sm:w-14">
@@ -61,8 +60,7 @@ function ReviewCard({ item, variant = "grid" }) {
             aria-hidden
           />
         </span>
-        <span className="sr-only">Play video: {item.title}</span>
-      </Link>
+      </div>
       <h3 className="font-home-body mt-3 text-[0.95rem] font-bold leading-snug text-[#1f2a24] lg:font-home-heading lg:font-semibold">
         {item.title}
       </h3>
@@ -132,7 +130,7 @@ export default function AsSeenInYourSpaceSection() {
             See how our customers bring Furniqo pieces into their homes
           </p>
           <Link
-            href="/shop-all"
+            href="/products"
             className="font-home-sub mt-5 inline-flex w-full max-w-sm items-center justify-center rounded-[6px] bg-[#24352D] px-7 py-3.5 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm transition hover:bg-[#1a2822] sm:mt-6 sm:w-auto sm:text-[11px]"
           >
             Shop best sellers

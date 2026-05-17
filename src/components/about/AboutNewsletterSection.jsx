@@ -23,11 +23,11 @@ export default function AboutNewsletterSection() {
 
   return (
     <section
-      className="bg-[#F9F7F2] py-12 sm:py-14 md:py-16 lg:py-20"
+      className="bg-[#FAF9F6] py-12 sm:py-14 md:py-16 lg:py-20"
       aria-labelledby="about-newsletter-heading"
     >
       <div className={SITE_HEADER_GUTTERS}>
-        <div className="mx-auto max-w-4xl rounded-2xl bg-[#F7F3ED] px-5 py-10 shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:px-8 sm:py-11 md:px-10 md:py-12 lg:px-12 lg:py-14">
+        <div className="w-full bg-[#F9F8F3] px-5 py-10 sm:px-8 sm:py-11 md:px-10 md:py-12 lg:px-12 lg:py-14">
           <h2
             id="about-newsletter-heading"
             className="mx-auto max-w-2xl text-center font-home-heading text-[1.35rem] font-normal leading-snug tracking-[-0.02em] sm:text-[1.5rem] md:text-[1.65rem] lg:text-[1.75rem]"

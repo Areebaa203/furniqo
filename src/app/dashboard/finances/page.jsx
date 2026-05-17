@@ -23,12 +23,75 @@ const stats = [
   { label: "Refunds", value: "$320.00", change: "+1.2%", trend: "down", icon: "mingcute:back-2-fill", color: "bg-red-500" },
 ];
 
+function TransactionTableRow({
+  trx,
+  openActionId,
+  setOpenActionId,
+  setViewTransaction,
+  getStatusColor,
+}) {
+  const actionButtonRef = useRef(null);
+  const isMenuOpen = openActionId === trx.id;
+
+  return (
+    <tr className="group hover:bg-gray-50/50 transition-colors">
+      <td className="px-6 py-4 font-mono text-gray-900">{trx.id}</td>
+      <td className="px-6 py-4 font-medium text-gray-900">{trx.customer}</td>
+      <td className="px-6 py-4 text-gray-500">
+        {trx.date} <span className="ml-1 text-xs text-gray-400">{trx.time}</span>
+      </td>
+      <td
+        className={clsx(
+          "px-6 py-4 font-bold",
+          trx.amount.startsWith("-") ? "text-red-600" : "text-green-600",
+        )}
+      >
+        {trx.amount}
+      </td>
+      <td className="px-6 py-4">
+        <span
+          className={clsx(
+            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
+            getStatusColor(trx.status),
+          )}
+        >
+          {trx.status}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-gray-500">{trx.method}</td>
+      <td className="relative px-6 py-4 text-right">
+        <button
+          ref={actionButtonRef}
+          type="button"
+          onClick={() => setOpenActionId(isMenuOpen ? null : trx.id)}
+          className={clsx(
+            "rounded-lg p-2 transition-colors",
+            isMenuOpen
+              ? "bg-gray-100 text-gray-900"
+              : "text-gray-400 hover:bg-gray-100 hover:text-gray-600",
+          )}
+        >
+          <Icon icon="mingcute:more-2-fill" width="20" />
+        </button>
+        <FinanceActionDropdown
+          isOpen={isMenuOpen}
+          onClose={() => setOpenActionId(null)}
+          anchorRef={actionButtonRef}
+          transaction={trx}
+          onView={(t) => setViewTransaction(t)}
+          onDownload={(t) => console.log("Download", t)}
+          onRefund={(t) => console.log("Refund", t)}
+        />
+      </td>
+    </tr>
+  );
+}
+
 export default function FinancesPage() {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [openActionId, setOpenActionId] = useState(null);
   const [viewTransaction, setViewTransaction] = useState(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
-  const actionRefs = useRef({});
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -142,41 +205,14 @@ export default function FinancesPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 border-t border-gray-100">
                     {transactions.map((trx) => (
-                        <tr key={trx.id} className="group hover:bg-gray-50/50 transition-colors">
-                            <td className="px-6 py-4 font-mono text-gray-900">{trx.id}</td>
-                            <td className="px-6 py-4 font-medium text-gray-900">{trx.customer}</td>
-                            <td className="px-6 py-4 text-gray-500">{trx.date} <span className="text-xs text-gray-400 ml-1">{trx.time}</span></td>
-                            <td className={clsx("px-6 py-4 font-bold", trx.amount.startsWith("-") ? "text-red-600" : "text-green-600")}>
-                                {trx.amount}
-                            </td>
-                            <td className="px-6 py-4">
-                                <span className={clsx("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset", getStatusColor(trx.status))}>
-                                    {trx.status}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 text-gray-500">{trx.method}</td>
-                            <td className="px-6 py-4 text-right relative">
-                                <button 
-                                    ref={(el) => (actionRefs.current[trx.id] = el)}
-                                    onClick={() => setOpenActionId(openActionId === trx.id ? null : trx.id)}
-                                    className={clsx(
-                                        "rounded-lg p-2 transition-colors",
-                                        openActionId === trx.id ? "bg-gray-100 text-gray-900" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                                    )}
-                                >
-                                    <Icon icon="mingcute:more-2-fill" width="20" />
-                                </button>
-                                <FinanceActionDropdown 
-                                    isOpen={openActionId === trx.id} 
-                                    onClose={() => setOpenActionId(null)}
-                                    anchorRef={{ current: actionRefs.current[trx.id] }}
-                                    transaction={trx}
-                                    onView={(t) => setViewTransaction(t)}
-                                    onDownload={(t) => console.log("Download", t)}
-                                    onRefund={(t) => console.log("Refund", t)}
-                                />
-                            </td>
-                        </tr>
+                        <TransactionTableRow
+                            key={trx.id}
+                            trx={trx}
+                            openActionId={openActionId}
+                            setOpenActionId={setOpenActionId}
+                            setViewTransaction={setViewTransaction}
+                            getStatusColor={getStatusColor}
+                        />
                     ))}
                 </tbody>
             </table>

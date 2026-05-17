@@ -28,9 +28,22 @@ export async function generateMetadata({ params }) {
 
 export default async function JournalArticlePage({ params }) {
   const { slug } = await params;
-  const hero = JOURNAL_HERO_SLIDES.find((s) => s.id === slug);
+  let hero = JOURNAL_HERO_SLIDES.find((s) => s.id === slug);
   const post = JOURNAL_LISTING_POSTS.find((p) => p.slug === slug);
   if (!hero && !post) notFound();
+
+  // Map listing posts to hero format so they all get the rich hero header
+  if (!hero && post) {
+    hero = {
+      id: post.slug,
+      src: post.image,
+      alt: post.title,
+      eyebrow: post.categoryLabel,
+      title: post.title,
+      readMinutes: post.readMinutes,
+      description: post.excerpt,
+    };
+  }
 
   const heroArticleMeta =
     hero &&
@@ -57,16 +70,6 @@ export default async function JournalArticlePage({ params }) {
         ) : null}
         {hero && heroArticleMeta && !(fullArticle?.hideHeroIntro) ? (
           <p className="font-home-body mt-8 text-base leading-relaxed text-neutral-700">{hero.description}</p>
-        ) : null}
-        {!hero ? (
-          <>
-            <p className="font-home-sub mt-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6b7368]">
-              {post.categoryLabel}
-            </p>
-            <h1 className="font-home-heading mt-3 text-3xl leading-tight text-[#1a3021] sm:text-4xl">{post.title}</h1>
-            <p className="font-home-body mt-4 text-sm text-neutral-500">{post.readMinutes} min read</p>
-            <p className="font-home-body mt-6 text-base leading-relaxed text-neutral-700">{post.excerpt}</p>
-          </>
         ) : null}
         {fullArticle ? (
           <div className="mt-12 sm:mt-14">

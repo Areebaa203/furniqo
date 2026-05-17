@@ -35,6 +35,32 @@ const fragmentMono = Fragment_Mono({
 export const metadata = {
   title: "Furniqo - Store & Dashboard",
   description: "Modern e-commerce and store management",
+  keywords: "furniture, e-commerce, shop, dashboard, home decor",
+  robots: "index, follow",
+  viewport: "width=device-width, initial-scale=1",
+  openGraph: {
+    title: "Furniqo - Modern Furniture Store",
+    description: "Explore premium furniture and manage your store with Furniqo.",
+    url: "https://www.furniqo.com",
+    siteName: "Furniqo",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Furniqo Furniture",
+      },
+    ],
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Furniqo - Modern Furniture Store",
+    description: "Explore premium furniture and manage your store with Furniqo.",
+    images: ["/og-image.png"],
+    creator: "@furniqo",
+  },
   icons: {
     icon: [
       {

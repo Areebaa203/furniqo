@@ -20,7 +20,7 @@ export function ProductCard({ product }) {
   const { addItem } = useCart();
   const href = `/products/${product.slug}`;
   return (
-    <article className="flex h-full flex-col text-left">
+    <article className="flex h-full flex-col text-center">
       <Link href={href} className="group flex min-w-0 flex-1 flex-col">
         <div
           className="relative aspect-square w-full shrink-0 overflow-hidden bg-[#ebe8e0]"
@@ -30,7 +30,7 @@ export function ProductCard({ product }) {
             src={product.image}
             alt={product.name}
             fill
-            className="object-contain p-2.5 transition group-hover:opacity-95 sm:p-3"
+            className="object-cover transition group-hover:opacity-95"
             sizes="(max-width: 640px) 50vw, 25vw"
           />
           <span
@@ -48,7 +48,7 @@ export function ProductCard({ product }) {
           {product.name}
         </h3>
 
-        <div className="mt-1 flex flex-wrap items-center gap-0.5 text-amber-500">
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-0.5 text-amber-500">
           {Array.from({ length: 5 }).map((_, i) => (
             <Icon key={i} icon="mingcute:star-fill" className="size-3 sm:size-3.5" aria-hidden />
           ))}
@@ -57,7 +57,7 @@ export function ProductCard({ product }) {
           </span>
         </div>
 
-        <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <p className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-0.5">
           <span className="text-base font-semibold text-neutral-900">${formatPrice(product.price)}</span>
           <span
             className="font-home-body text-sm tabular-nums line-through"

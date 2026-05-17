@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { SITE_HEADER_GUTTERS } from "@/components/home/SiteHeader";
 
-const WORKSHOP_IMAGE = "/about-img-2.jpg";
+const WORKSHOP_IMAGE = "/about-img-3.jpg";
 
 const ACCORDION_ITEMS = [
   {
@@ -40,10 +40,10 @@ export default function AboutHowWeWorkSection() {
   const [openId, setOpenId] = useState(ACCORDION_ITEMS[0].id);
 
   return (
-    <section className="bg-white" aria-labelledby="about-how-heading">
+    <section className="bg-[#FDFBF7]" aria-labelledby="about-how-heading">
       <div className={`${SITE_HEADER_GUTTERS} py-14 sm:py-16 md:py-20 lg:py-24`}>
-        <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2 md:gap-8 lg:gap-14 xl:gap-16">
-          <div className="order-1 flex min-w-0 flex-col">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-8 lg:gap-14 xl:gap-16">
+          <div className="order-1 flex min-w-0 flex-col py-4 md:max-w-[480px]">
             <p className="font-home-sub text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6b6b6b] sm:text-[11px]">
               How we work
             </p>
@@ -53,7 +53,7 @@ export default function AboutHowWeWorkSection() {
             >
               Quality you can see and feel
             </h2>
-            <p className="mt-5 font-home-body text-sm leading-relaxed text-[#4A4A4A] sm:mt-6 sm:text-[15px] lg:text-base">
+            <p className="mt-4 font-home-body text-[13px] leading-relaxed text-[#4A4A4A] sm:mt-5 sm:text-[14px]">
               Every Furniqo piece goes through careful hands and rigorous standards before it reaches your home.
               Here&apos;s what makes our furniture different.
             </p>
@@ -72,18 +72,18 @@ export default function AboutHowWeWorkSection() {
                         aria-expanded={isOpen}
                         aria-controls={panelId}
                         onClick={() => setOpenId(isOpen ? "" : item.id)}
-                        className="flex w-full items-start gap-3 py-5 text-left transition hover:opacity-90 sm:gap-3.5 sm:py-5"
+                        className="flex w-full items-center gap-3 py-4 text-left transition hover:opacity-90 sm:gap-3.5 sm:py-5"
                       >
-                        <span className="mt-0.5 shrink-0 text-[#1A1A1A]" aria-hidden>
-                          <Icon icon="mingcute:check-circle-fill" className="size-5 sm:size-[1.35rem]" />
+                        <span className="shrink-0 text-[#1A1A1A]" aria-hidden>
+                          <Icon icon="mingcute:check-line" className="size-4 sm:size-[1.1rem]" />
                         </span>
-                        <span className="min-w-0 flex-1 font-home-body text-[15px] font-semibold leading-snug text-[#1A1A1A] sm:text-[0.95rem]">
+                        <span className="min-w-0 flex-1 font-home-body text-[13px] font-bold leading-snug text-[#1A1A1A] sm:text-[14px]">
                           {item.title}
                         </span>
                         <span className="shrink-0 text-[#6b6b6b]" aria-hidden>
                           <Icon
                             icon={isOpen ? "mingcute:minimize-line" : "mingcute:add-line"}
-                            className="size-5 sm:size-[1.35rem]"
+                            className="size-4 sm:size-[1.1rem]"
                           />
                         </span>
                       </button>
@@ -93,9 +93,9 @@ export default function AboutHowWeWorkSection() {
                       role="region"
                       aria-labelledby={headerId}
                       hidden={!isOpen}
-                      className={isOpen ? "pb-5 pl-[2.125rem] sm:pl-[2.35rem]" : "hidden"}
+                      className={isOpen ? "pb-5 pl-[1.75rem] sm:pl-[2rem]" : "hidden"}
                     >
-                      <p className="font-home-body text-sm leading-relaxed text-[#4A4A4A] sm:text-[15px]">
+                      <p className="font-home-body text-[12px] leading-relaxed text-[#4A4A4A] sm:text-[13px]">
                         {item.body}
                       </p>
                     </div>
@@ -104,10 +104,10 @@ export default function AboutHowWeWorkSection() {
               })}
             </div>
 
-            <div className="mt-10 sm:mt-12">
+            <div className="mt-8 sm:mt-10">
               <Link
                 href="/shop-all"
-                className="font-home-sub inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-md border border-[#1A1A1A] bg-[#FAF9F6] px-8 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1A1A1A] transition hover:bg-[#f0ede6] sm:h-[3rem] sm:text-[11px]"
+                className="font-home-sub inline-flex h-11 min-w-[9.5rem] items-center justify-center rounded-[4px] border border-[#d8d2c7] bg-transparent px-6 text-center text-[9px] font-bold uppercase tracking-[0.2em] text-[#1A1A1A] transition hover:bg-[#f2eee6] sm:h-12 sm:text-[10px]"
               >
                 Shop now
               </Link>

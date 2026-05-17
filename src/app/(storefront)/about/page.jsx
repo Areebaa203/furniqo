@@ -5,6 +5,7 @@ import AboutHowWeWorkSection from "@/components/about/AboutHowWeWorkSection";
 import AboutFaqSection from "@/components/about/AboutFaqSection";
 import AboutNewsletterSection from "@/components/about/AboutNewsletterSection";
 import AboutRecommendationsSection from "@/components/about/AboutRecommendationsSection";
+import ValuePropsBand from "@/components/home/ValuePropsBand";
 
 export const metadata = {
   title: "About · Furniqo",
@@ -18,9 +19,10 @@ export default function AboutPage() {
       <AboutStatsSection />
       <AboutTimelineSection />
       <AboutHowWeWorkSection />
-      <AboutFaqSection />
       <AboutNewsletterSection />
       <AboutRecommendationsSection />
+      <ValuePropsBand sectionClassName="bg-[#FAF9F6] py-12 sm:py-16 lg:py-20" />
+      <AboutFaqSection />
     </main>
   );
 }

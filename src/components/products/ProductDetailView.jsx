@@ -146,12 +146,12 @@ export default function ProductDetailView({ product }) {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,420px)]">
           {/* Gallery */}
           <div className="relative mx-auto w-full max-w-2xl lg:mx-0 lg:max-w-none">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-[#ece7de]">
+            <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-[#ece7de] md:aspect-[5/4] lg:aspect-square">
               <Image
                 src={gallery[slide] ?? product.image}
                 alt={product.name}
                 fill
-                className="object-contain p-4 sm:p-8"
+                className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 55vw"
                 priority
               />

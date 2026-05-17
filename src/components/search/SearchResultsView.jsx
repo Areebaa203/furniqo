@@ -45,7 +45,7 @@ export default function SearchResultsView() {
         <form role="search" aria-label="Search products" className="mb-8 flex items-center gap-3 border-b border-neutral-200/90 pb-4" onSubmit={onSubmit}>
           <Icon icon="mingcute:search-line" className="size-5 shrink-0 text-neutral-500" aria-hidden />
           <input
-            type="search"
+            type="text"
             name="q"
             value={input}
             onChange={(e) => setInput(e.target.value)}

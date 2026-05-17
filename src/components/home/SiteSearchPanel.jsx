@@ -71,7 +71,7 @@ export default function SiteSearchPanel({ open, onClose }) {
           <Icon icon="mingcute:search-line" className="size-5 shrink-0 text-neutral-500" aria-hidden />
           <input
             ref={inputRef}
-            type="search"
+            type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"

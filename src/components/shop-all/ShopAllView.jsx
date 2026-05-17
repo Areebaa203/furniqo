@@ -39,38 +39,59 @@ function formatPrice(n) {
 
 function ProductCard({ product }) {
   const { addItem } = useCart();
+  const href = `/products/${product.slug}`;
   return (
-    <article className="flex h-full flex-col rounded-sm border border-[#e8e3d9] bg-[#f4f1ea] p-3 text-center sm:p-4">
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden rounded-[2px] bg-[#ece7de]">
+    <article className="flex h-full flex-col text-center">
+      <Link href={href} className="group flex min-w-0 flex-1 flex-col">
+        <div
+          className="relative aspect-square w-full shrink-0 overflow-hidden bg-[#ebe8e0]"
+          style={{ borderRadius: "2px" }}
+        >
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-contain p-2.5 sm:p-3.5"
+            className="object-cover transition group-hover:opacity-95"
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
-          <span className="absolute right-2 top-2 bg-[#B22222] px-2 py-0.5 text-[10px] font-semibold text-white">
+          <span
+            className="font-home-sub absolute right-2 top-2 px-1.5 py-px text-[9px] font-semibold tabular-nums text-white sm:right-2.5 sm:px-2 sm:py-0.5 sm:text-[10px]"
+            style={{ backgroundColor: "#B22222" }}
+          >
             -{product.discount}%
           </span>
         </div>
 
-        <h3 className="font-home-heading mt-3 text-sm text-[#1a3021] sm:text-base">{product.name}</h3>
-        <div className="mt-1 flex justify-center gap-0.5 text-amber-600" aria-hidden>
+        <h3
+          className="font-home-heading mt-2.5 text-[0.95rem] leading-snug text-[#2D3E33] sm:mt-3 sm:text-lg"
+        >
+          {product.name}
+        </h3>
+
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-0.5 text-amber-500">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Icon key={i} icon="mingcute:star-fill" className="size-3 sm:size-3.5" />
+            <Icon key={i} icon="mingcute:star-fill" className="size-3 sm:size-3.5" aria-hidden />
           ))}
-          <span className="ml-1 text-[11px] text-neutral-600 sm:text-xs">({product.reviews} reviews)</span>
+          <span className="ml-0.5 font-home-body text-[10px] font-normal text-neutral-500 sm:text-xs">
+            ({product.reviews} reviews)
+          </span>
         </div>
-        <p className="mt-1.5 flex flex-wrap items-baseline justify-center gap-1.5">
-          <span className="text-sm font-semibold text-[#B22222] sm:text-base">${formatPrice(product.price)}</span>
-          <span className="text-xs text-neutral-800 line-through sm:text-sm">${formatPrice(product.compareAt)}</span>
+
+        <p className="mt-1.5 flex flex-wrap items-baseline justify-center gap-x-2 gap-y-0.5">
+          <span className="text-base font-semibold text-neutral-900">${formatPrice(product.price)}</span>
+          <span
+            className="font-home-body text-sm tabular-nums line-through"
+            style={{ color: "#B22222" }}
+          >
+            ${formatPrice(product.compareAt)}
+          </span>
         </p>
       </Link>
 
       <button
         type="button"
-        className="font-home-sub mt-auto w-full border border-neutral-300/90 bg-[#f7f3ec] py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-800 transition hover:bg-[#ece7de]"
+        className="font-home-sub mt-3 w-full border border-[#d4cfc3] bg-[#f4f0ea] py-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#2D3E33] transition hover:bg-[#2A3E34] hover:text-white sm:mt-3.5 sm:py-2.5 sm:text-[10px]"
+        style={{ borderRadius: "2px" }}
         onClick={() =>
           addItem({
             slug: product.slug,
@@ -90,7 +111,7 @@ function ProductCard({ product }) {
 
 function PromoCard() {
   return (
-    <article className="relative min-h-[180px] overflow-hidden rounded-sm border border-[#e8e3d9] bg-[#ece7de] sm:min-h-[220px] xl:min-h-[260px]">
+    <article className="relative h-full min-h-[180px] overflow-hidden rounded-sm border border-[#e8e3d9] bg-[#ece7de] sm:min-h-[220px]">
       <Image
         src={DEAL_PROMO.image}
         alt="Gift promotion"

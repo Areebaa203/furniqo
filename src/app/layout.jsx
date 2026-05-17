@@ -33,11 +33,11 @@ const fragmentMono = Fragment_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://www.furniqo.com"),
   title: "Furniqo - Store & Dashboard",
   description: "Modern e-commerce and store management",
   keywords: "furniture, e-commerce, shop, dashboard, home decor",
   robots: "index, follow",
-  viewport: "width=device-width, initial-scale=1",
   openGraph: {
     title: "Furniqo - Modern Furniture Store",
     description: "Explore premium furniture and manage your store with Furniqo.",
@@ -71,6 +71,11 @@ export const metadata = {
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 import { Toaster } from "@/components/ui/toaster";
